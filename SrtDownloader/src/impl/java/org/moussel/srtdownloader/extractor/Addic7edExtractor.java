@@ -1,4 +1,4 @@
-package org.moussel.srtdownloader;
+package org.moussel.srtdownloader.extractor;
 
 import java.io.BufferedInputStream;
 import java.io.FileOutputStream;
@@ -17,6 +17,8 @@ import org.htmlcleaner.CleanerProperties;
 import org.htmlcleaner.HtmlCleaner;
 import org.htmlcleaner.TagNode;
 import org.htmlcleaner.XPather;
+import org.moussel.srtdownloader.EpisodeInfo;
+import org.moussel.srtdownloader.SubtitleExtractor;
 
 public class Addic7edExtractor implements SubtitleExtractor {
 
