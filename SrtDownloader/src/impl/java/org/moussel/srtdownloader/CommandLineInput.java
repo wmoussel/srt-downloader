@@ -3,7 +3,7 @@ import java.util.ArrayList;
 
 import org.moussel.srtdownloader.extractor.Addic7edExtractor;
 
-public class SrtDownloader {
+public class CommandLineInput {
 
 	public static void main(String[] args) throws Exception {
 
@@ -40,6 +40,7 @@ public class SrtDownloader {
 		SubtitleExtractor extractor = new Addic7edExtractor();
 		
 		for(EpisodeInfo episode : episodeList) {
+			
 			extractor.extractSubtitle(episode);
 		}
 		System.out.println("Done.");

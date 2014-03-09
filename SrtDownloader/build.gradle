@@ -41,6 +41,7 @@ dependencies {
 jar {
     from sourceSets.api.output
     from sourceSets.impl.output
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
 }
 
 uploadArchives {
