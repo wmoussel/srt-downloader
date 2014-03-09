@@ -1,13 +1,9 @@
 package org.moussel.srtdownloader;
-import java.io.InputStream;
 import java.util.ArrayList;
 
-public class SrtDownloader {
+import org.moussel.srtdownloader.extractor.Addic7edExtractor;
 
-	static String convertStreamToString(InputStream is) {
-		java.util.Scanner s = new java.util.Scanner(is).useDelimiter("\\A");
-		return s.hasNext() ? s.next() : "";
-	}
+public class SrtDownloader {
 
 	public static void main(String[] args) throws Exception {
 
