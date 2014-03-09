@@ -2,13 +2,13 @@ package org.moussel.srtdownloader;
 
 public class EpisodeInfoImpl implements EpisodeInfo  {
 
-	ShowInfo show = new ShowInfo("The_Mentalist");
-	Integer season = 6;
-	Integer episode = 6;
+	ShowInfo show;
+	Integer season;
+	Integer episode;
 	
 	public EpisodeInfoImpl(String showName, int season, int episode) {
 		super();
-		this.show = new ShowInfo(showName);
+		this.show = new ShowInfoImpl(showName);
 		this.season = season;
 		this.episode = episode;
 	}
