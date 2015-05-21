@@ -17,6 +17,11 @@ import asg.cliche.ShellFactory;
 
 public class SrtDownloaderShell implements ShellDependent {
 
+	public static void main(String[] params) throws IOException {
+		ShellFactory.createConsoleShell("srt-down", "Java Srt Downloader",
+				new SrtDownloaderShell()).commandLoop();
+	}
+
 	Shell mainShell;
 
 	@Override
@@ -27,15 +32,22 @@ public class SrtDownloaderShell implements ShellDependent {
 	@Command(name = "showadd")
 	public String showAdd(@Param(name = "showName") String showName) {
 		TvDbServiceConnector svc = new TvDbServiceConnector();
-		TvDbLocalDao localDb = TvDbLocalDao.getInstance();
 		try {
 			TvDbSeriesList series = svc.getSeriesList(showName);
 			int chosen = 0;
+			TvDbSerieInfo chosenSerieInfo;
 			if (series != null && series.size() > 1) {
 				System.out.println("Multiple Series found: ");
-				System.out.println(SrtDownloaderUtils.jsonString(series));
+				int i = 0;
+				for (TvDbSerieInfo tvDbSerieInfo : series) {
+					System.out.println(" " + (++i) + ") "
+							+ tvDbSerieInfo.toString());
+				}
+				chosen = SrtDownloaderUtils.promtForInt(
+						"Please select appropriate result", 2) - 1;
 			}
-			TvDbSerieInfo chosenSerieInfo = svc.getSerieInfo(series.get(chosen).id);
+			chosenSerieInfo = svc.getSerieInfo(series.get(chosen).id);
+			TvDbLocalDao localDb = TvDbLocalDao.getInstance();
 			localDb.addShow(chosenSerieInfo);
 			return chosenSerieInfo.toString();
 		} catch (Exception e) {
@@ -50,24 +62,14 @@ public class SrtDownloaderShell implements ShellDependent {
 		TvDbLocalDao localDb = TvDbLocalDao.getInstance();
 		try {
 			Collection<TvDbSerieInfo> showList = localDb.getSeriesList();
-			return new StringBuilder().append(showList.size()).append(" Series found:\\n")
+			return new StringBuilder().append(showList.size())
+					.append(" Series found:\n")
 					.append(SrtDownloaderUtils.jsonString(showList)).toString();
 		} catch (Exception e) {
 			e.printStackTrace(System.err);
 			return "ERROR: " + e.getMessage();
 		}
 
-	}
-
-	@Command(name = "subget")
-	public String subMaunalDownload(String serie, int season, String episodes) {
-		try {
-			CommandLineInput.getSubtitles(serie, season, episodes);
-			return "Done.";
-		} catch (Exception e) {
-			e.printStackTrace(System.err);
-			return "ERROR: " + e.getMessage();
-		}
 	}
 
 	@Command(name = "subauto")
@@ -81,7 +83,14 @@ public class SrtDownloaderShell implements ShellDependent {
 		}
 	}
 
-	public static void main(String[] params) throws IOException {
-		ShellFactory.createConsoleShell("srt-down", "Java Srt Downloader", new SrtDownloaderShell()).commandLoop();
+	@Command(name = "subget")
+	public String subMaunalDownload(String serie, int season, String episodes) {
+		try {
+			CommandLineInput.getSubtitles(serie, season, episodes);
+			return "Done.";
+		} catch (Exception e) {
+			e.printStackTrace(System.err);
+			return "ERROR: " + e.getMessage();
+		}
 	}
 }
