@@ -25,41 +25,16 @@ import com.fasterxml.jackson.jr.ob.JSONObjectException;
 
 public class SrtDownloaderUtils {
 
-	static final Scanner inputScanner = new Scanner(System.in);
 	private static final String APPLICATION_PROPERTIES = "srtDownloader.default.properties";
 	private static Properties applicationProps;
-
-	public static String promtForString(String invite) {
-
-		System.out.print("\n" + invite + ": ");
-		try {
-			String choice = inputScanner.nextLine();
-			return choice;
-		} catch (Exception e) {
-		} finally {
-		}
-		return null;
-	}
-
-	public static int promtForInt(String invite, int maxRetries) {
-
-		for (int i = 0; i <= maxRetries; i++) {
-			try {
-				String choice = promtForString(invite);
-				int choiceInt = Integer.parseInt(choice);
-				return choiceInt;
-			} catch (Exception e) {
-				continue;
-			}
-		}
-		return -1;
-	}
+	static final Scanner inputScanner = new Scanner(System.in);
 
 	static {
 
 		applicationProps = new Properties();
 		try {
-			InputStream stream = SrtDownloaderUtils.class.getClassLoader().getResourceAsStream(APPLICATION_PROPERTIES);
+			InputStream stream = SrtDownloaderUtils.class.getClassLoader()
+					.getResourceAsStream(APPLICATION_PROPERTIES);
 			if (stream != null) {
 				applicationProps.load(stream);
 			}
@@ -86,8 +61,8 @@ public class SrtDownloaderUtils {
 		return defaultValue;
 	}
 
-	public static void getUrlContent(URL url, Map<String, String> headers, OutputStream out)
-			throws MalformedURLException, IOException {
+	public static void getUrlContent(URL url, Map<String, String> headers,
+			OutputStream out) throws MalformedURLException, IOException {
 		BufferedInputStream in = null;
 		try {
 			URLConnection connection = url.openConnection();
@@ -121,7 +96,8 @@ public class SrtDownloaderUtils {
 			try {
 				JAXBContext jc = JAXBContext.newInstance(bean.getClass());
 				Unmarshaller unmarshaller = jc.createUnmarshaller();
-				beanObject = (T) unmarshaller.unmarshal(new StringReader(responseAsString));
+				beanObject = (T) unmarshaller.unmarshal(new StringReader(
+						responseAsString));
 				return beanObject;
 			} catch (JAXBException e) {
 				// TODO Auto-generated catch block
@@ -141,13 +117,40 @@ public class SrtDownloaderUtils {
 
 	public static String jsonString(Object bean) {
 		try {
-			return JSON.std.with(Feature.PRETTY_PRINT_OUTPUT).without(Feature.WRITE_NULL_PROPERTIES).asString(bean);
+			return JSON.std.with(Feature.PRETTY_PRINT_OUTPUT)
+					.without(Feature.WRITE_NULL_PROPERTIES).asString(bean);
 		} catch (JSONObjectException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		}
+		return null;
+	}
+
+	public static int promtForInt(String invite, int maxRetries) {
+
+		for (int i = 0; i <= maxRetries; i++) {
+			try {
+				String choice = promtForString(invite);
+				int choiceInt = Integer.parseInt(choice);
+				return choiceInt;
+			} catch (Exception e) {
+				continue;
+			}
+		}
+		return -1;
+	}
+
+	public static String promtForString(String invite) {
+
+		System.out.print("\n" + invite + ": ");
+		try {
+			String choice = inputScanner.nextLine();
+			return choice;
+		} catch (Exception e) {
+		} finally {
 		}
 		return null;
 	}

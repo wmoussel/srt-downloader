@@ -2,9 +2,9 @@ package org.moussel.srtdownloader;
 
 public class TvShowEpisodeInfoImpl implements TvShowEpisodeInfo {
 
-	TvShowInfo show;
-	Integer season;
 	Integer episode;
+	Integer season;
+	TvShowInfo show;
 	String team;
 	String title;
 
@@ -18,11 +18,61 @@ public class TvShowEpisodeInfoImpl implements TvShowEpisodeInfo {
 	/*
 	 * (non-Javadoc)
 	 * 
+	 * @see org.moussel.srtdownloader.EpisodeInfo#getEpisode()
+	 */
+	@Override
+	public Integer getEpisode() {
+		return episode;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.moussel.srtdownloader.EpisodeInfo#getSeason()
+	 */
+	@Override
+	public Integer getSeason() {
+		return season;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.moussel.srtdownloader.EpisodeInfo#getShow()
 	 */
 	@Override
 	public TvShowInfo getShow() {
 		return show;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.moussel.srtdownloader.TvShowEpisodeInfo#getTitle()
+	 */
+	@Override
+	public String getTitle() {
+		return title;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.moussel.srtdownloader.EpisodeInfo#setEpisode(java.lang.Integer)
+	 */
+	@Override
+	public void setEpisode(Integer episode) {
+		this.episode = episode;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.moussel.srtdownloader.EpisodeInfo#setSeason(java.lang.Integer)
+	 */
+	@Override
+	public void setSeason(Integer season) {
+		this.season = season;
 	}
 
 	/*
@@ -40,56 +90,6 @@ public class TvShowEpisodeInfoImpl implements TvShowEpisodeInfo {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.moussel.srtdownloader.EpisodeInfo#getSeason()
-	 */
-	@Override
-	public Integer getSeason() {
-		return season;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.moussel.srtdownloader.EpisodeInfo#setSeason(java.lang.Integer)
-	 */
-	@Override
-	public void setSeason(Integer season) {
-		this.season = season;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.moussel.srtdownloader.EpisodeInfo#getEpisode()
-	 */
-	@Override
-	public Integer getEpisode() {
-		return episode;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.moussel.srtdownloader.EpisodeInfo#setEpisode(java.lang.Integer)
-	 */
-	@Override
-	public void setEpisode(Integer episode) {
-		this.episode = episode;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.moussel.srtdownloader.TvShowEpisodeInfo#getTitle()
-	 */
-	@Override
-	public String getTitle() {
-		return title;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
 	 * @see
 	 * org.moussel.srtdownloader.TvShowEpisodeInfo#setTitle(java.lang.String)
 	 */
@@ -100,7 +100,7 @@ public class TvShowEpisodeInfoImpl implements TvShowEpisodeInfo {
 
 	@Override
 	public String toString() {
-		return "Show: [" + show + "], Season " + season + ", Episode " + episode
-				+ ((title != null) ? " (" + title + ")" : "");
+		return "Show: [" + show + "], Season " + season + ", Episode "
+				+ episode + ((title != null) ? " (" + title + ")" : "");
 	}
 }

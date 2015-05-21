@@ -18,20 +18,6 @@ public class TvDbSeriesList implements Iterable<TvDbSerieInfo> {
 	@XmlElement(name = "Series")
 	private List<TvDbSerieInfo> seriesList = new ArrayList<TvDbSerieInfo>();
 
-	@Override
-	public String toString() {
-		StringBuilder sb = new StringBuilder("GetSeriesListResponse(");
-		sb.append((seriesList != null) ? seriesList.size() : "null");
-		sb.append("): ");
-		sb.append(StringUtils.join(seriesList, ","));
-
-		return sb.toString();
-	}
-
-	public int size() {
-		return (seriesList != null) ? seriesList.size() : 0;
-	}
-
 	public TvDbSerieInfo get(int i) {
 		if (size() > 0) {
 			return seriesList.get(i);
@@ -44,13 +30,27 @@ public class TvDbSeriesList implements Iterable<TvDbSerieInfo> {
 		return seriesList;
 	}
 
+	@Override
+	public Iterator<TvDbSerieInfo> iterator() {
+		return seriesList.iterator();
+	}
+
 	public void setSeriesList(List<TvDbSerieInfo> seriesList) {
 		this.seriesList = seriesList;
 	}
 
+	public int size() {
+		return (seriesList != null) ? seriesList.size() : 0;
+	}
+
 	@Override
-	public Iterator<TvDbSerieInfo> iterator() {
-		return seriesList.iterator();
+	public String toString() {
+		StringBuilder sb = new StringBuilder("GetSeriesListResponse(");
+		sb.append((seriesList != null) ? seriesList.size() : "null");
+		sb.append("): ");
+		sb.append(StringUtils.join(seriesList, ","));
+
+		return sb.toString();
 	}
 
 }

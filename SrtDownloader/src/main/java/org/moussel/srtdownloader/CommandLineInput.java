@@ -9,6 +9,35 @@ import org.moussel.srtdownloader.utils.SrtDownloaderUtils;
 public class CommandLineInput {
 	static File downloadToFolder = new File("/Users/wandrillemoussel/Movies");
 
+	public static void getSubtitles(String show, Integer season,
+			String episodeNumber) throws Exception {
+		getSubtitles(show, season, episodeNumber, downloadToFolder);
+	}
+
+	public static void getSubtitles(String show, Integer season,
+			String episodeNumber, File downloadToFolder) throws Exception {
+		ArrayList<TvShowEpisodeInfoImpl> episodeList = new ArrayList<TvShowEpisodeInfoImpl>();
+		if (episodeNumber.contains("-")) {
+			String[] eps = episodeNumber.split("-");
+			if (eps.length == 2) {
+				int epMin = Integer.parseInt(eps[0]);
+				int epMax = Integer.parseInt(eps[1]);
+				for (int i = epMin; i <= epMax; i++) {
+					episodeList.add(new TvShowEpisodeInfoImpl(show, season, i));
+				}
+			}
+		} else {
+			episodeList.add(new TvShowEpisodeInfoImpl(show, season, Integer
+					.parseInt(episodeNumber)));
+		}
+
+		SubtitleExtractor extractor = new Addic7edInteractiveExtractor();
+
+		for (TvShowEpisodeInfo episode : episodeList) {
+			extractor.extractTvSubtitle(episode, downloadToFolder, null);
+		}
+	}
+
 	public static void main(String[] args) throws Exception {
 
 		String show = null;
@@ -38,40 +67,14 @@ public class CommandLineInput {
 			season = SrtDownloaderUtils.promtForInt("TV Show Season", 3);
 		}
 		if (episodeNumber == null) {
-			episodeNumber = SrtDownloaderUtils.promtForString("Episode(s) [accepts \"4-6\" for getting several]");
+			episodeNumber = SrtDownloaderUtils
+					.promtForString("Episode(s) [accepts \"4-6\" for getting several]");
 		}
 		System.out.println("Starting...");
 
 		getSubtitles(show, season, episodeNumber);
 		System.out.println("Done.");
 
-	}
-
-	public static void getSubtitles(String show, Integer season, String episodeNumber) throws Exception {
-		getSubtitles(show, season, episodeNumber, downloadToFolder);
-	}
-
-	public static void getSubtitles(String show, Integer season, String episodeNumber, File downloadToFolder)
-			throws Exception {
-		ArrayList<TvShowEpisodeInfoImpl> episodeList = new ArrayList<TvShowEpisodeInfoImpl>();
-		if (episodeNumber.contains("-")) {
-			String[] eps = episodeNumber.split("-");
-			if (eps.length == 2) {
-				int epMin = Integer.parseInt(eps[0]);
-				int epMax = Integer.parseInt(eps[1]);
-				for (int i = epMin; i <= epMax; i++) {
-					episodeList.add(new TvShowEpisodeInfoImpl(show, season, i));
-				}
-			}
-		} else {
-			episodeList.add(new TvShowEpisodeInfoImpl(show, season, Integer.parseInt(episodeNumber)));
-		}
-
-		SubtitleExtractor extractor = new Addic7edInteractiveExtractor();
-
-		for (TvShowEpisodeInfo episode : episodeList) {
-			extractor.extractTvSubtitle(episode, downloadToFolder, null);
-		}
 	}
 
 }

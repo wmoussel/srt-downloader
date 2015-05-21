@@ -3,15 +3,9 @@ package org.moussel.srtdownloader;
 public interface TvShowEpisodeInfo {
 
 	/**
-	 * @return the show
+	 * @return the episode
 	 */
-	public abstract TvShowInfo getShow();
-
-	/**
-	 * @param show
-	 *            the show to set
-	 */
-	public abstract void setShow(TvShowInfo show);
+	public abstract Integer getEpisode();
 
 	/**
 	 * @return the season
@@ -19,15 +13,15 @@ public interface TvShowEpisodeInfo {
 	public abstract Integer getSeason();
 
 	/**
-	 * @param season
-	 *            the season to set
+	 * @return the show
 	 */
-	public abstract void setSeason(Integer season);
+	public abstract TvShowInfo getShow();
 
 	/**
-	 * @return the episode
+	 * 
+	 * @return the episode title
 	 */
-	public abstract Integer getEpisode();
+	public abstract String getTitle();
 
 	/**
 	 * @param episode
@@ -36,10 +30,16 @@ public interface TvShowEpisodeInfo {
 	public abstract void setEpisode(Integer episode);
 
 	/**
-	 * 
-	 * @return the episode title
+	 * @param season
+	 *            the season to set
 	 */
-	public abstract String getTitle();
+	public abstract void setSeason(Integer season);
+
+	/**
+	 * @param show
+	 *            the show to set
+	 */
+	public abstract void setShow(TvShowInfo show);
 
 	/**
 	 * 

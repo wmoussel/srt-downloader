@@ -14,13 +14,6 @@ public class TvDbServiceConnector {
 	static final String apiKey = "3399055529ED13E7";
 	static final String mirrorPath = "http://thetvdb.com";
 
-	String mirrorUrlWithApiKey;
-	private final String userLanguage = "fr";
-
-	public TvDbServiceConnector() {
-		mirrorUrlWithApiKey = mirrorPath + "/api/" + apiKey;
-	}
-
 	public static void main(String[] args) {
 		TvDbServiceConnector svc = new TvDbServiceConnector();
 		svc.getMirrorsList();
@@ -30,23 +23,18 @@ public class TvDbServiceConnector {
 		}
 	}
 
-	void getMirrorsList() {
-		try {
-			URL requestUrl = new URL("http://thetvdb.com/api/" + apiKey + "/mirrors.xml");
-			System.out.println(requestUrl.toString());
-			SrtDownloaderUtils.getUrlContent(requestUrl, null, System.out);
-			System.out.println();
-		} catch (MalformedURLException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+	String mirrorUrlWithApiKey;
+
+	private final String userLanguage = "fr";
+
+	public TvDbServiceConnector() {
+		mirrorUrlWithApiKey = mirrorPath + "/api/" + apiKey;
 	}
 
 	void getCurrentServerTime() {
 		try {
-			URL requestUrl = new URL("http://thetvdb.com/api/Updates.php?type=none");
+			URL requestUrl = new URL(
+					"http://thetvdb.com/api/Updates.php?type=none");
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
 		}
@@ -60,15 +48,31 @@ public class TvDbServiceConnector {
 		}
 	}
 
-	public TvDbSeriesList getSeriesList(String serieName) {
+	void getMirrorsList() {
 		try {
-			URL requestUrl = new URL("http://thetvdb.com/api/GetSeries.php?seriesname="
-					+ URLEncoder.encode(serieName, "ISO-8859-1"));
+			URL requestUrl = new URL("http://thetvdb.com/api/" + apiKey
+					+ "/mirrors.xml");
 			System.out.println(requestUrl.toString());
-			TvDbSeriesList seriesList = new TvDbSeriesList();
-			seriesList = SrtDownloaderUtils.getUrlXmlContentAsBean(requestUrl, seriesList);
-			System.out.println(seriesList.toString());
-			return seriesList;
+			SrtDownloaderUtils.getUrlContent(requestUrl, null, System.out);
+			System.out.println();
+		} catch (MalformedURLException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	public TvDbSerieInfo getSerieInfo(String id) {
+		try {
+			URL requestUrl = new URL(mirrorUrlWithApiKey + "/series/" + id
+					+ "/" + userLanguage + ".xml");
+			System.out.println(requestUrl.toString());
+			TvDbSeriesList serieList = new TvDbSeriesList();
+			serieList = SrtDownloaderUtils.getUrlXmlContentAsBean(requestUrl,
+					serieList);
+			System.out.println(SrtDownloaderUtils.jsonString(serieList.get(0)));
+			return serieList.get(0);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -76,14 +80,17 @@ public class TvDbServiceConnector {
 		return null;
 	}
 
-	public TvDbSerieInfo getSerieInfo(int serieId) {
+	public TvDbSeriesList getSeriesList(String serieName) {
 		try {
-			URL requestUrl = new URL(mirrorUrlWithApiKey + "/series/" + serieId + "/" + userLanguage + ".xml");
+			URL requestUrl = new URL(
+					"http://thetvdb.com/api/GetSeries.php?seriesname="
+							+ URLEncoder.encode(serieName, "ISO-8859-1"));
 			System.out.println(requestUrl.toString());
-			TvDbSeriesList serieList = new TvDbSeriesList();
-			serieList = SrtDownloaderUtils.getUrlXmlContentAsBean(requestUrl, serieList);
-			System.out.println(SrtDownloaderUtils.jsonString(serieList.get(0)));
-			return serieList.get(0);
+			TvDbSeriesList seriesList = new TvDbSeriesList();
+			seriesList = SrtDownloaderUtils.getUrlXmlContentAsBean(requestUrl,
+					seriesList);
+			System.out.println(seriesList.toString());
+			return seriesList;
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

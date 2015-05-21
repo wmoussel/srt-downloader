@@ -13,9 +13,23 @@ import org.moussel.srtdownloader.extractor.Addic7edExtractor;
 
 public class AutoDownload {
 
+	public static String getDefaultLanguage() {
+		return Locale.getDefault().getLanguage();
+	}
+
+	public static Path getSubtitlePath(Path moviePath) {
+		String fileName = moviePath.getFileName().toString();
+		String fileBaseName = fileName.replaceFirst("\\.[^.]{2,4}$", "");
+		String subtitleFileName = fileBaseName + "." + getDefaultLanguage()
+				+ ".srt";
+		return moviePath.getParent().resolve(subtitleFileName);
+	}
+
 	public static void main(String[] args) throws IOException {
-		new AutoDownload().autoDownload("/Users/wandrillemoussel/Movies/TV Shows/", "**.{mp4,mkv}");
-		new AutoDownload().autoDownload("/Volumes/Public/Shared Videos/TV_Shows/", "**.{mp4,mkv}");
+		new AutoDownload().autoDownload(
+				"/Users/wandrillemoussel/Movies/TV Shows/", "**.{mp4,mkv}");
+		new AutoDownload().autoDownload(
+				"/Volumes/Public/Shared Videos/TV_Shows/", "**.{mp4,mkv}");
 	}
 
 	public void autoDownload(String folder, String glob) throws IOException {
@@ -25,7 +39,8 @@ public class AutoDownload {
 				@Override
 				public boolean test(Path p) {
 					String fn = p.getFileName().toString();
-					return Files.isRegularFile(p) && (fn.endsWith(".mkv") || fn.endsWith(".mp4"));
+					return Files.isRegularFile(p)
+							&& (fn.endsWith(".mkv") || fn.endsWith(".mp4"));
 				}
 			}).forEach(new Consumer<Path>() {
 				@Override
@@ -33,30 +48,23 @@ public class AutoDownload {
 					Path srtPath = getSubtitlePath(p);
 					if (!srtPath.toFile().exists()) {
 						// Download it
-						System.out.println("Subtitle missing for movie " + p.getFileName());
-						VideoFileInfoImpl fileInfo = new VideoFileInfoImpl(p.toFile());
+						System.out.println("Subtitle missing for movie "
+								+ p.getFileName());
+						VideoFileInfoImpl fileInfo = new VideoFileInfoImpl(p
+								.toFile());
 						try {
-							extractor.extractTvSubtitle(fileInfo.tvEpisodeInfo, p.getParent().toFile(), fileInfo);
+							extractor.extractTvSubtitle(fileInfo.tvEpisodeInfo,
+									p.getParent().toFile(), fileInfo);
 						} catch (Exception e) {
 							e.printStackTrace();
 						}
 					} else {
-						System.out.println("Subtitle already there for movie " + p.getFileName());
+						System.out.println("Subtitle already there for movie "
+								+ p.getFileName());
 					}
 				}
 
 			});
 		}
-	}
-
-	public static String getDefaultLanguage() {
-		return Locale.getDefault().getLanguage();
-	}
-
-	public static Path getSubtitlePath(Path moviePath) {
-		String fileName = moviePath.getFileName().toString();
-		String fileBaseName = fileName.replaceFirst("\\.[^.]{2,4}$", "");
-		String subtitleFileName = fileBaseName + "." + getDefaultLanguage() + ".srt";
-		return moviePath.getParent().resolve(subtitleFileName);
 	}
 }
