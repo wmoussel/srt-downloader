@@ -1,11 +1,13 @@
 package org.moussel.srtdownloader;
 
+import java.io.File;
 import java.util.ArrayList;
 
-import org.moussel.srtdownloader.extractor.Addic7edExtractor;
+import org.moussel.srtdownloader.extractor.Addic7edInteractiveExtractor;
 import org.moussel.srtdownloader.utils.SrtDownloaderUtils;
 
 public class CommandLineInput {
+	static File downloadToFolder = new File("/Users/wandrillemoussel/Movies");
 
 	public static void main(String[] args) throws Exception {
 
@@ -40,27 +42,36 @@ public class CommandLineInput {
 		}
 		System.out.println("Starting...");
 
-		ArrayList<EpisodeInfoImpl> episodeList = new ArrayList<EpisodeInfoImpl>();
+		getSubtitles(show, season, episodeNumber);
+		System.out.println("Done.");
+
+	}
+
+	public static void getSubtitles(String show, Integer season, String episodeNumber) throws Exception {
+		getSubtitles(show, season, episodeNumber, downloadToFolder);
+	}
+
+	public static void getSubtitles(String show, Integer season, String episodeNumber, File downloadToFolder)
+			throws Exception {
+		ArrayList<TvShowEpisodeInfoImpl> episodeList = new ArrayList<TvShowEpisodeInfoImpl>();
 		if (episodeNumber.contains("-")) {
 			String[] eps = episodeNumber.split("-");
 			if (eps.length == 2) {
 				int epMin = Integer.parseInt(eps[0]);
 				int epMax = Integer.parseInt(eps[1]);
 				for (int i = epMin; i <= epMax; i++) {
-					episodeList.add(new EpisodeInfoImpl(show, season, i));
+					episodeList.add(new TvShowEpisodeInfoImpl(show, season, i));
 				}
 			}
 		} else {
-			episodeList.add(new EpisodeInfoImpl(show, season, Integer.parseInt(episodeNumber)));
+			episodeList.add(new TvShowEpisodeInfoImpl(show, season, Integer.parseInt(episodeNumber)));
 		}
 
-		SubtitleExtractor extractor = new Addic7edExtractor();
+		SubtitleExtractor extractor = new Addic7edInteractiveExtractor();
 
-		for (EpisodeInfo episode : episodeList) {
-			extractor.extractSubtitle(episode);
+		for (TvShowEpisodeInfo episode : episodeList) {
+			extractor.extractTvSubtitle(episode, downloadToFolder, null);
 		}
-		System.out.println("Done.");
-
 	}
 
 }
