@@ -24,6 +24,32 @@ task wrapper(type: Wrapper) {
     gradleVersion = '2.0'
 }
 
+/*
+ * Gets the version name from the latest Git tag
+ */
+def getVersionName = { ->
+    def stdout = new ByteArrayOutputStream()
+    exec {
+        commandLine 'git', 'describe', '--tags', '--always', '--dirty=-snapshot'
+        standardOutput = stdout
+    }
+    return stdout.toString().trim()
+}
+
+//create a single Jar with all dependencies
+task fatJar(type: Jar) {
+    def ver = getVersionName()
+    manifest {
+        attributes 'Implementation-Title': 'Subtitle downloader',  
+            'Implementation-Version': ver,
+            'Main-Class': "org.moussel.srtdownloader.SrtDownloaderShell"
+    }
+    baseName = project.name + '-' + ver
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
+
+
 // In this section you declare the dependencies for your production and test code
 dependencies {
     // The production code uses the SLF4J logging API at compile time
@@ -39,5 +65,5 @@ dependencies {
     // 'test.useTestNG()' to your build script.
     testCompile 'junit:junit:4.11'
     
-    mainClassName = "org.moussel.srtdownloader.AutoDownload"
+    mainClassName = "org.moussel.srtdownloader.SrtDownloaderShell"
 }
