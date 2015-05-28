@@ -1,7 +1,9 @@
 package org.moussel.srtdownloader.data.tvdb.bean;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -60,6 +62,8 @@ public class TvDbSerieInfo {
 	@XmlElement(name = "Network")
 	String network;
 
+	Map<String, String> otherIds = new HashMap<>();
+
 	@XmlElement(name = "Overview")
 	String overview;
 
@@ -109,6 +113,10 @@ public class TvDbSerieInfo {
 
 	public String getNetwork() {
 		return network;
+	}
+
+	public Map<String, String> getOtherIds() {
+		return otherIds;
 	}
 
 	public String getOverview() {
@@ -161,6 +169,10 @@ public class TvDbSerieInfo {
 
 	public void setNetwork(String network) {
 		this.network = network;
+	}
+
+	public void setOtherIds(Map<String, String> otherIds) {
+		this.otherIds = otherIds;
 	}
 
 	public void setOverview(String overview) {

@@ -3,6 +3,7 @@ package org.moussel.srtdownloader;
 import java.io.IOException;
 import java.util.Collection;
 
+import org.apache.commons.lang.StringUtils;
 import org.moussel.srtdownloader.data.TvDbLocalDao;
 import org.moussel.srtdownloader.data.TvDbServiceConnector;
 import org.moussel.srtdownloader.data.tvdb.bean.TvDbSerieInfo;
@@ -18,8 +19,7 @@ import asg.cliche.ShellFactory;
 public class SrtDownloaderShell implements ShellDependent {
 
 	public static void main(String[] params) throws IOException {
-		ShellFactory.createConsoleShell("srt-down", "Java Srt Downloader",
-				new SrtDownloaderShell()).commandLoop();
+		ShellFactory.createConsoleShell("srt-down", "Java Srt Downloader", new SrtDownloaderShell()).commandLoop();
 	}
 
 	Shell mainShell;
@@ -40,13 +40,12 @@ public class SrtDownloaderShell implements ShellDependent {
 				System.out.println("Multiple Series found: ");
 				int i = 0;
 				for (TvDbSerieInfo tvDbSerieInfo : series) {
-					System.out.println(" " + (++i) + ") "
-							+ tvDbSerieInfo.toString());
+					System.out.println(" " + (++i) + ") " + tvDbSerieInfo.toString());
 				}
-				chosen = SrtDownloaderUtils.promtForInt(
-						"Please select appropriate result", 2) - 1;
+				chosen = SrtDownloaderUtils.promtForInt("Please select appropriate result", 2) - 1;
 			}
 			chosenSerieInfo = svc.getSerieInfo(series.get(chosen).id);
+			chosenSerieInfo.getAlternativeNames().add(showName);
 			TvDbLocalDao localDb = TvDbLocalDao.getInstance();
 			localDb.addShow(chosenSerieInfo);
 			return chosenSerieInfo.toString();
@@ -57,13 +56,30 @@ public class SrtDownloaderShell implements ShellDependent {
 
 	}
 
+	@Command(name = "showalias")
+	public String showAddAlias(String show, String alias) {
+		TvDbLocalDao localDb = TvDbLocalDao.getInstance();
+		try {
+			TvDbSerieInfo serieInfo = localDb.getSerieByName(show);
+			if (alias.startsWith("-")) {
+				serieInfo.getAlternativeNames().remove(alias);
+			} else {
+				serieInfo.getAlternativeNames().add(alias);
+			}
+			localDb.updateShow(serieInfo);
+			return "Alternative names are now: " + StringUtils.join(serieInfo.getAlternativeNames(), ",");
+		} catch (Exception e) {
+			return "An error occured: " + e.getMessage();
+		}
+
+	}
+
 	@Command(name = "showlist")
 	public String showList() {
 		TvDbLocalDao localDb = TvDbLocalDao.getInstance();
 		try {
 			Collection<TvDbSerieInfo> showList = localDb.getSeriesList();
-			return new StringBuilder().append(showList.size())
-					.append(" Series found:\n")
+			return new StringBuilder().append(showList.size()).append(" Series found:\n")
 					.append(SrtDownloaderUtils.jsonString(showList)).toString();
 		} catch (Exception e) {
 			e.printStackTrace(System.err);
