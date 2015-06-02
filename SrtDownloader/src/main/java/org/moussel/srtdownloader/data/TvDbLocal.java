@@ -17,7 +17,10 @@ public class TvDbLocal {
 
 	Long dbVersion;
 
+	Map<String, Object> extractorsConfiguration = new HashMap<>();
+
 	Long lastUpdate;
+
 	// Can be rebuilt from seriesInfoList
 	Map<String, String> serieIdByAlternativeName = new HashMap<>();
 
@@ -44,6 +47,10 @@ public class TvDbLocal {
 		return dbVersion;
 	}
 
+	public Map<String, Object> getExtractorsConfiguration() {
+		return extractorsConfiguration;
+	}
+
 	public Long getLastUpdate() {
 		return lastUpdate;
 	}
@@ -67,6 +74,10 @@ public class TvDbLocal {
 
 	public void setDbVersion(Long dbVersion) {
 		this.dbVersion = dbVersion;
+	}
+
+	public void setExtractorsConfiguration(Map<String, Object> extractorsConfiguration) {
+		this.extractorsConfiguration = extractorsConfiguration;
 	}
 
 	public void setLastUpdate(Long lastUpdate) {
