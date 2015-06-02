@@ -4,12 +4,19 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+import org.moussel.srtdownloader.data.TvDbLocalDao;
 import org.moussel.srtdownloader.extractor.Addic7edExtractor;
+import org.moussel.srtdownloader.utils.SrtDownloaderUtils;
 
 public class AutoDownload {
 
@@ -30,6 +37,21 @@ public class AutoDownload {
 		return Locale.getDefault().getLanguage();
 	}
 
+	private static List<String> getScanFolders() {
+		String folderInConf = "SCAN_FOLDERS";
+		TvDbLocalDao jsonDb = TvDbLocalDao.getInstance();
+		Map<String, Object> conf = jsonDb.getConfiguration("AutoDownload");
+		if (conf == null) {
+			conf = new HashMap<>();
+		}
+		if (conf == null || !conf.containsKey(folderInConf)) {
+			String path = SrtDownloaderUtils.promtForString("Please setup folders to scan by giving path");
+			conf.put(folderInConf, Arrays.asList(new String[] { path }));
+			jsonDb.setConfiguration("AutoDownload", conf);
+		}
+		return (List<String>) conf.get(folderInConf);
+	}
+
 	public static Path getSubtitlePath(Path moviePath) {
 		String fileName = moviePath.getFileName().toString();
 		String fileBaseName = fileName.replaceFirst("\\.[^.]{2,4}$", "");
@@ -37,9 +59,21 @@ public class AutoDownload {
 		return moviePath.getParent().resolve(subtitleFileName);
 	}
 
+	public static void lauchDownload(String[] foldersToScan) throws IOException {
+		AutoDownload downloader = new AutoDownload();
+		List<String> foldersToScanList = new ArrayList<String>();
+		if (foldersToScan == null || foldersToScan.length == 0) {
+			foldersToScanList = getScanFolders();
+		} else {
+			foldersToScanList.addAll(Arrays.asList(foldersToScan));
+		}
+		for (String folder : foldersToScanList) {
+			downloader.autoDownload(folder, "**.{avi,mp4,mkv}");
+		}
+	}
+
 	public static void main(String[] args) throws IOException {
-		new AutoDownload().autoDownload("/Volumes/Public/Shared Videos/TV_Shows/", "**.{mp4,mkv}");
-		new AutoDownload().autoDownload("/Users/wandrillemoussel/Movies/TV Shows/", "**.{mp4,mkv}");
+		lauchDownload(args);
 	}
 
 	public void autoDownload(String folder, String glob) throws IOException {
