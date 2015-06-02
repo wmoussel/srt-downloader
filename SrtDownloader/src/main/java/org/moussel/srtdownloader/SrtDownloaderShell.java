@@ -1,6 +1,8 @@
 package org.moussel.srtdownloader;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Collection;
 
 import org.apache.commons.lang.StringUtils;
@@ -8,6 +10,7 @@ import org.moussel.srtdownloader.data.TvDbLocalDao;
 import org.moussel.srtdownloader.data.TvDbServiceConnector;
 import org.moussel.srtdownloader.data.tvdb.bean.TvDbSerieInfo;
 import org.moussel.srtdownloader.data.tvdb.bean.TvDbSeriesList;
+import org.moussel.srtdownloader.extractor.Addic7edInteractiveExtractor;
 import org.moussel.srtdownloader.utils.SrtDownloaderUtils;
 
 import asg.cliche.Command;
@@ -57,7 +60,7 @@ public class SrtDownloaderShell implements ShellDependent {
 	}
 
 	@Command(name = "showalias")
-	public String showAddAlias(String show, String alias) {
+	public String showAddAlias(@Param(name = "fullName") String show, @Param(name = "alias") String alias) {
 		TvDbLocalDao localDb = TvDbLocalDao.getInstance();
 		try {
 			TvDbSerieInfo serieInfo = localDb.getSerieByName(show);
@@ -91,7 +94,7 @@ public class SrtDownloaderShell implements ShellDependent {
 	@Command(name = "subauto")
 	public String subAutoDownload() {
 		try {
-			AutoDownload.main(null);
+			AutoDownload.lauchDownload(null);
 			return "Done.";
 		} catch (Exception e) {
 			e.printStackTrace(System.err);
@@ -100,7 +103,8 @@ public class SrtDownloaderShell implements ShellDependent {
 	}
 
 	@Command(name = "subget")
-	public String subMaunalDownload(String serie, int season, String episodes) {
+	public String subMaunalDownload(@Param(name = "showName") String serie, @Param(name = "season") int season,
+			@Param(name = "episode(s)") String episodes) {
 		try {
 			CommandLineInput.getSubtitles(serie, season, episodes);
 			return "Done.";
