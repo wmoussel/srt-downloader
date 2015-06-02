@@ -1,12 +1,8 @@
 package org.moussel.srtdownloader.extractor;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -18,33 +14,31 @@ import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.commons.lang.StringUtils;
 import org.htmlcleaner.CleanerProperties;
 import org.htmlcleaner.HtmlCleaner;
 import org.htmlcleaner.TagNode;
 import org.htmlcleaner.XPather;
 import org.htmlcleaner.XPatherException;
-import org.moussel.srtdownloader.AutoDownload;
 import org.moussel.srtdownloader.SubtitleExtractor;
 import org.moussel.srtdownloader.TvShowEpisodeInfo;
 import org.moussel.srtdownloader.TvShowInfo;
 import org.moussel.srtdownloader.VideoFileInfoImpl;
 import org.moussel.srtdownloader.data.TvDbLocalDao;
 import org.moussel.srtdownloader.data.tvdb.bean.TvDbSerieInfo;
-import org.moussel.srtdownloader.utils.SrtDownloaderUtils;
 
-public class Addic7edExtractor implements SubtitleExtractor {
+public class Addic7edExtractor extends AbstractSubtitleExtractor implements SubtitleExtractor {
 
-	class SubInfo {
-		public LinkedHashMap<String, String> headers;
-		String url;
-		Map<String, String> versionInfos;
+	static Map<String, String> languageMappingCache = null;
+
+	public Addic7edExtractor() {
+		super();
+		// Default configuration value
+		setConfigDefault(ConfigurationKeys.SERVICE_URL, "http://www.addic7ed.com");
+		setConfigDefault(ConfigurationKeys.SUB_LANG_NAME, "fr");
 	}
 
-	private static final String SERVICE_NAME = "Addic7ed";
-	private static final String SERVICE_URL = "http://www.addic7ed.com";
-
-	SubInfo chooseSub(List<SubInfo> subInfos, final VideoFileInfoImpl videoFile) {
+	@Override
+	protected SubInfo chooseSub(List<SubInfo> subInfos, final VideoFileInfoImpl videoFile) {
 		if (videoFile != null) {
 			Optional<SubInfo> choice = subInfos.stream().filter(new Predicate<SubInfo>() {
 				@Override
@@ -87,48 +81,19 @@ public class Addic7edExtractor implements SubtitleExtractor {
 		return subInfos.get(0);
 	}
 
-	@Override
-	public Path extractTvSubtitle(TvShowEpisodeInfo episode, File destinationFolder, VideoFileInfoImpl videoFileInfo)
-			throws Exception {
-		List<SubInfo> subInfos = null;
-		subInfos = getAvailableSubtitles(episode);
-		if (subInfos.isEmpty()) {
-			System.out.println("No Subtitle found.");
-			return null;
-		} else {
-			SubInfo subInfoChosen = chooseSub(subInfos, videoFileInfo);
-			if (subInfoChosen != null) {
-				FileOutputStream subFileOutputStream = null;
-				try {
-					Path subFile;
-					if (videoFileInfo != null && videoFileInfo.getVideoFilePath() != null) {
-						Path videoFile = videoFileInfo.getVideoFilePath();
-						subFile = AutoDownload.getSubtitlePath(videoFile);
-					} else {
-						String fileName = episode.getShow().getName() + " - "
-								+ StringUtils.leftPad("" + episode.getSeason(), 2, "0") + "x"
-								+ StringUtils.leftPad("" + episode.getEpisode(), 2, "0")
-								+ ((episode.getTitle() == null) ? "" : " - " + episode.getTitle()) + "."
-								+ subInfoChosen.versionInfos.get("version") + ".fr.srt";
-						subFile = Paths.get(destinationFolder.getAbsolutePath(), fileName);
-					}
-					System.out
-							.print("Downloading file [" + subInfoChosen.url + "] to [" + subFile.toString() + "]... ");
-					subFileOutputStream = new FileOutputStream(subFile.toFile());
-					SrtDownloaderUtils.getUrlContent(new URL(subInfoChosen.url), subInfoChosen.headers,
-							subFileOutputStream);
-					System.out.println("OK.");
-					return subFile;
-				} catch (Exception ex) {
-					System.out.println("FAILED: " + ex.getMessage());
-				} finally {
-					if (subFileOutputStream != null) {
-						subFileOutputStream.close();
-					}
-				}
+	public Object[] extractElementsFromUrl(String path, String xPathExpression) {
+		try {
+			// Get Home page to have a valid show
+			TagNode htmlNode = getHtmlUrl(path);
+			XPather showList = new XPather(xPathExpression);
+			Object[] x = showList.evaluateAgainstNode(htmlNode);
+			if (x != null && x.length > 0) {
+				return x;
 			}
-			return null;
+		} catch (Exception e) {
+			System.err.println(e.getMessage());
 		}
+		return null;
 	}
 
 	private Collection<String> getAlternativeShowNames(TvShowInfo show) {
@@ -136,7 +101,8 @@ public class Addic7edExtractor implements SubtitleExtractor {
 		return serieInfo != null ? serieInfo.getAlternativeNames() : new ArrayList<String>();
 	}
 
-	List<SubInfo> getAvailableSubtitles(TvShowEpisodeInfo episode) throws Exception {
+	@Override
+	protected List<SubInfo> getAvailableSubtitles(TvShowEpisodeInfo episode) throws Exception {
 		List<SubInfo> subInfos = new ArrayList<SubInfo>();
 
 		LinkedHashMap<String, String> headers = new LinkedHashMap<>();
@@ -172,8 +138,9 @@ public class Addic7edExtractor implements SubtitleExtractor {
 						}
 						String comment = versionDownloadedXPather.evaluateAgainstNode((TagNode) v)[0].toString().trim();
 						versionInfos.put("comment", comment);
-						System.out.println((subInfos.size() + 1) + "): " + versionInfos + " : " + SERVICE_URL + href);
-						si.url = SERVICE_URL + href;
+						System.out.println((subInfos.size() + 1) + "): " + versionInfos + " : "
+								+ getConfig(ConfigurationKeys.SERVICE_URL) + href);
+						si.url = getConfig(ConfigurationKeys.SERVICE_URL) + href;
 						si.versionInfos = versionInfos;
 						si.headers = headers;
 						subInfos.add(si);
@@ -184,7 +151,7 @@ public class Addic7edExtractor implements SubtitleExtractor {
 		return subInfos;
 	}
 
-	private TagNode getCorrectHtmlNode(TvShowEpisodeInfo episode, Map<String, String> headers) {
+	TagNode getCorrectHtmlNode(TvShowEpisodeInfo episode, Map<String, String> headers) {
 		List<String> showNameList = new ArrayList<>();
 		TvShowInfo showInfo = episode.getShow();
 		String preferredName = getPreferredShowName(showInfo);
@@ -200,8 +167,8 @@ public class Addic7edExtractor implements SubtitleExtractor {
 			String path;
 			try {
 				path = "/serie/" + URLEncoder.encode(showName, "ISO-8859-1") + "/" + episode.getSeason() + "/"
-						+ episode.getEpisode() + "/8";
-				TagNode htmlNode = getHtmlUrl(SERVICE_URL + path);
+						+ episode.getEpisode() + "/" + getLanguageCode();
+				TagNode htmlNode = getHtmlUrl(getConfig(ConfigurationKeys.SERVICE_URL) + path);
 				XPather episodeInfoXPather = new XPather("//span[@class='titulo']");
 				Object[] x = episodeInfoXPather.evaluateAgainstNode(htmlNode);
 				if (x != null && x.length >= 1) {
@@ -214,7 +181,7 @@ public class Addic7edExtractor implements SubtitleExtractor {
 						} catch (Exception e) {
 
 						}
-						headers.put("Referer", SERVICE_URL + path);
+						headers.put("Referer", getConfig(ConfigurationKeys.SERVICE_URL) + path);
 						if (!showName.equals(preferredName)) {
 							setPreferredShowName(showInfo, showName);
 						}
@@ -252,25 +219,33 @@ public class Addic7edExtractor implements SubtitleExtractor {
 		return tagNode;
 	}
 
-	public String getPreferredShowName(TvShowInfo show) {
-		TvDbSerieInfo serieInfo = TvDbLocalDao.getInstance().getSerieByName(show.getName());
-		if (serieInfo != null && serieInfo.getOtherIds().containsKey(getServiceName())) {
-			return serieInfo.getOtherIds().get(getServiceName());
+	@Override
+	public Map<String, String> getLanguageCodeMapping() throws UnsupportedEncodingException {
+		if (languageMappingCache == null) {
+			Map<String, String> langMapping = new LinkedHashMap<>();
+			Object[] extracted = extractElementsFromUrl(getConfig(ConfigurationKeys.SERVICE_URL),
+					"//select[@id='qsShow']/option/text()");
+			String showName = extracted[10].toString().trim();
+
+			String path = "/serie/" + URLEncoder.encode(showName, "ISO-8859-1") + "/1/1/0";
+			Object[] extractOptions = extractElementsFromUrl(getConfig(ConfigurationKeys.SERVICE_URL) + path,
+					"//select[@id='filterlang']/option");
+			for (Object option : extractOptions) {
+				if (option instanceof TagNode) {
+					TagNode node = (TagNode) option;
+					String text = node.getAllChildren().get(0).toString().toLowerCase();
+					String value = node.getAttributeByName("value");
+					langMapping.put(text, value);
+				}
+			}
+			languageMappingCache = langMapping;
 		}
-		return null;
+		return languageMappingCache;
 	}
 
 	@Override
 	public String getServiceName() {
-		return SERVICE_NAME;
+		return "Addic7ed";
 	}
 
-	private void setPreferredShowName(TvShowInfo showInfo, String showName) {
-		TvDbSerieInfo serieInfo = TvDbLocalDao.getInstance().getSerieByName(showInfo.getName());
-		if (serieInfo != null) {
-			System.out.println("Saving [" + showName + "] as preferred name for " + getServiceName());
-			serieInfo.getOtherIds().put(SERVICE_NAME, showName);
-			TvDbLocalDao.getInstance().updateShow(serieInfo);
-		}
-	}
 }
