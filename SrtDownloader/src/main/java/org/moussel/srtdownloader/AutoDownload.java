@@ -52,15 +52,15 @@ public class AutoDownload {
 		return (List<String>) conf.get(folderInConf);
 	}
 
-	public static Path getSubtitlePath(Path moviePath) {
+	public static Path getSubtitlePath(Path moviePath, String langName) {
 		String fileName = moviePath.getFileName().toString();
 		String fileBaseName = fileName.replaceFirst("\\.[^.]{2,4}$", "");
-		String subtitleFileName = fileBaseName + "." + getDefaultLanguage() + ".srt";
+		String subtitleFileName = fileBaseName + "." + langName + ".srt";
 		return moviePath.getParent().resolve(subtitleFileName);
 	}
 
-	public static void lauchDownload(String[] foldersToScan) throws IOException {
-		AutoDownload downloader = new AutoDownload();
+	public static void lauchDownload(String[] foldersToScan, String langName) throws IOException {
+		AutoDownload downloader = new AutoDownload(langName);
 		List<String> foldersToScanList = new ArrayList<String>();
 		if (foldersToScan == null || foldersToScan.length == 0) {
 			foldersToScanList = getScanFolders();
@@ -73,7 +73,14 @@ public class AutoDownload {
 	}
 
 	public static void main(String[] args) throws IOException {
-		lauchDownload(args);
+		String langName = System.getProperty("lang", getDefaultLanguage());
+		lauchDownload(args, langName);
+	}
+
+	String currentLanguage = null;
+
+	public AutoDownload(String langName) {
+		currentLanguage = langName;
 	}
 
 	public void autoDownload(String folder, String glob) throws IOException {
@@ -85,20 +92,21 @@ public class AutoDownload {
 				@Override
 				public boolean test(Path p) {
 					String fn = p.getFileName().toString();
-					return Files.isRegularFile(p) && (fn.endsWith(".mkv") || fn.endsWith(".mp4"));
+					return Files.isRegularFile(p)
+							&& (fn.endsWith(".mkv") || fn.endsWith(".mp4") || fn.endsWith(".avi"));
 				}
 			}).forEach(new Consumer<Path>() {
 				@Override
 				public void accept(Path p) {
-					Path srtPath = getSubtitlePath(p);
+					Path srtPath = getSubtitlePath(p, AutoDownload.this.currentLanguage);
 					if (!srtPath.toFile().exists()) {
 						count.withoutSubBefore++;
 						// Download it
 						System.out.println("Subtitle missing for movie " + p.getFileName());
 						VideoFileInfoImpl fileInfo = new VideoFileInfoImpl(p.toFile());
 						try {
-							Path subPath = extractor.extractTvSubtitle(fileInfo.tvEpisodeInfo, p.getParent().toFile(),
-									fileInfo);
+							Path subPath = extractor.extractTvSubtitle(fileInfo.tvEpisodeInfo, getCurrentLanguage(), p
+									.getParent().toFile(), fileInfo);
 							if (subPath != null) {
 								count.foundSub++;
 							}
@@ -117,5 +125,16 @@ public class AutoDownload {
 
 			System.out.println(count);
 		}
+	}
+
+	public String getCurrentLanguage() {
+		if (currentLanguage == null) {
+			currentLanguage = getDefaultLanguage();
+		}
+		return currentLanguage;
+	}
+
+	public void setCurrentLanguage(String currentLanguage) {
+		this.currentLanguage = currentLanguage;
 	}
 }

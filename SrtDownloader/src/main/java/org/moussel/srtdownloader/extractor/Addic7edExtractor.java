@@ -34,7 +34,6 @@ public class Addic7edExtractor extends AbstractSubtitleExtractor implements Subt
 		super();
 		// Default configuration value
 		setConfigDefault(ConfigurationKeys.SERVICE_URL, "http://www.addic7ed.com");
-		setConfigDefault(ConfigurationKeys.SUB_LANG_NAME, "fr");
 	}
 
 	@Override
@@ -102,11 +101,11 @@ public class Addic7edExtractor extends AbstractSubtitleExtractor implements Subt
 	}
 
 	@Override
-	protected List<SubInfo> getAvailableSubtitles(TvShowEpisodeInfo episode) throws Exception {
+	protected List<SubInfo> getAvailableSubtitles(TvShowEpisodeInfo episode, String langName) throws Exception {
 		List<SubInfo> subInfos = new ArrayList<SubInfo>();
 
 		LinkedHashMap<String, String> headers = new LinkedHashMap<>();
-		TagNode htmlNode = getCorrectHtmlNode(episode, headers);
+		TagNode htmlNode = getCorrectHtmlNode(episode, headers, langName);
 		if (htmlNode == null) {
 			return subInfos;
 		}
@@ -139,8 +138,8 @@ public class Addic7edExtractor extends AbstractSubtitleExtractor implements Subt
 						String comment = versionDownloadedXPather.evaluateAgainstNode((TagNode) v)[0].toString().trim();
 						versionInfos.put("comment", comment);
 						System.out.println((subInfos.size() + 1) + "): " + versionInfos + " : "
-								+ getConfig(ConfigurationKeys.SERVICE_URL) + href);
-						si.url = getConfig(ConfigurationKeys.SERVICE_URL) + href;
+								+ getConfigString(ConfigurationKeys.SERVICE_URL) + href);
+						si.url = getConfigString(ConfigurationKeys.SERVICE_URL) + href;
 						si.versionInfos = versionInfos;
 						si.headers = headers;
 						subInfos.add(si);
@@ -151,7 +150,7 @@ public class Addic7edExtractor extends AbstractSubtitleExtractor implements Subt
 		return subInfos;
 	}
 
-	TagNode getCorrectHtmlNode(TvShowEpisodeInfo episode, Map<String, String> headers) {
+	TagNode getCorrectHtmlNode(TvShowEpisodeInfo episode, Map<String, String> headers, String langName) {
 		List<String> showNameList = new ArrayList<>();
 		TvShowInfo showInfo = episode.getShow();
 		String preferredName = getPreferredShowName(showInfo);
@@ -162,13 +161,13 @@ public class Addic7edExtractor extends AbstractSubtitleExtractor implements Subt
 		if (showNameList.isEmpty()) {
 			showNameList.add(showInfo.getName());
 		}
-		System.out.println("Getting available subtitles for " + episode.toString() + "...");
+		System.out.println("Getting available " + langName + " subtitles for " + episode.toString() + "...");
 		for (String showName : showNameList) {
 			String path;
 			try {
 				path = "/serie/" + URLEncoder.encode(showName, "ISO-8859-1") + "/" + episode.getSeason() + "/"
-						+ episode.getEpisode() + "/" + getLanguageCode();
-				TagNode htmlNode = getHtmlUrl(getConfig(ConfigurationKeys.SERVICE_URL) + path);
+						+ episode.getEpisode() + "/" + getLanguageCode(langName);
+				TagNode htmlNode = getHtmlUrl(getConfigString(ConfigurationKeys.SERVICE_URL) + path);
 				XPather episodeInfoXPather = new XPather("//span[@class='titulo']");
 				Object[] x = episodeInfoXPather.evaluateAgainstNode(htmlNode);
 				if (x != null && x.length >= 1) {
@@ -181,7 +180,7 @@ public class Addic7edExtractor extends AbstractSubtitleExtractor implements Subt
 						} catch (Exception e) {
 
 						}
-						headers.put("Referer", getConfig(ConfigurationKeys.SERVICE_URL) + path);
+						headers.put("Referer", getConfigString(ConfigurationKeys.SERVICE_URL) + path);
 						if (!showName.equals(preferredName)) {
 							setPreferredShowName(showInfo, showName);
 						}
@@ -223,12 +222,12 @@ public class Addic7edExtractor extends AbstractSubtitleExtractor implements Subt
 	public Map<String, String> getLanguageCodeMapping() throws UnsupportedEncodingException {
 		if (languageMappingCache == null) {
 			Map<String, String> langMapping = new LinkedHashMap<>();
-			Object[] extracted = extractElementsFromUrl(getConfig(ConfigurationKeys.SERVICE_URL),
+			Object[] extracted = extractElementsFromUrl(getConfigString(ConfigurationKeys.SERVICE_URL),
 					"//select[@id='qsShow']/option/text()");
 			String showName = extracted[10].toString().trim();
 
 			String path = "/serie/" + URLEncoder.encode(showName, "ISO-8859-1") + "/1/1/0";
-			Object[] extractOptions = extractElementsFromUrl(getConfig(ConfigurationKeys.SERVICE_URL) + path,
+			Object[] extractOptions = extractElementsFromUrl(getConfigString(ConfigurationKeys.SERVICE_URL) + path,
 					"//select[@id='filterlang']/option");
 			for (Object option : extractOptions) {
 				if (option instanceof TagNode) {

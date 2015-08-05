@@ -25,7 +25,7 @@ import org.moussel.srtdownloader.utils.SrtDownloaderUtils;
 public abstract class AbstractSubtitleExtractor implements SubtitleExtractor {
 
 	protected enum ConfigurationKeys {
-		SERVICE_URL, SUB_LANG_CODE, SUB_LANG_NAME
+		ENABLED, SERVICE_URL, SUB_LANG_MAPPING
 	}
 
 	class SubInfo {
@@ -34,25 +34,29 @@ public abstract class AbstractSubtitleExtractor implements SubtitleExtractor {
 		Map<String, String> versionInfos;
 	}
 
-	private static Map<String, String> configuration = new HashMap<String, String>();
+	private static Map<String, Object> configuration = new HashMap<>();
+
+	// static public List<SubtitleExtractor> getEnabledExtractorList() {
+	// // Annotation
+	// }
 
 	public AbstractSubtitleExtractor() {
 		TvDbLocalDao jsonDb = TvDbLocalDao.getInstance();
 		configuration = jsonDb.getConfiguration(getServiceName());
 		if (configuration == null) {
-			configuration = new HashMap<String, String>();
+			configuration = new HashMap<>();
 		}
 	}
 
 	protected abstract SubInfo chooseSub(List<SubInfo> subInfos, VideoFileInfoImpl videoFileInfo);
 
 	@Override
-	public Path extractTvSubtitle(TvShowEpisodeInfo episode, File destinationFolder, VideoFileInfoImpl videoFileInfo)
-			throws Exception {
+	public Path extractTvSubtitle(TvShowEpisodeInfo episode, String langName, File destinationFolder,
+			VideoFileInfoImpl videoFileInfo) throws Exception {
 		List<SubInfo> subInfos = null;
-		subInfos = getAvailableSubtitles(episode);
+		subInfos = getAvailableSubtitles(episode, langName);
 		if (subInfos.isEmpty()) {
-			System.out.println("No Subtitle found.");
+			System.out.println("No " + langName + " Subtitle found.");
 			return null;
 		} else {
 			SubInfo subInfoChosen = chooseSub(subInfos, videoFileInfo);
@@ -62,13 +66,13 @@ public abstract class AbstractSubtitleExtractor implements SubtitleExtractor {
 					Path subFile;
 					if (videoFileInfo != null && videoFileInfo.getVideoFilePath() != null) {
 						Path videoFile = videoFileInfo.getVideoFilePath();
-						subFile = AutoDownload.getSubtitlePath(videoFile);
+						subFile = AutoDownload.getSubtitlePath(videoFile, langName);
 					} else {
 						String fileName = episode.getShow().getName() + " - "
 								+ StringUtils.leftPad("" + episode.getSeason(), 2, "0") + "x"
 								+ StringUtils.leftPad("" + episode.getEpisode(), 2, "0")
 								+ ((episode.getTitle() == null) ? "" : " - " + episode.getTitle()) + "."
-								+ subInfoChosen.versionInfos.get("version") + ".fr.srt";
+								+ subInfoChosen.versionInfos.get("version") + "." + langName + ".srt";
 						subFile = Paths.get(destinationFolder.getAbsolutePath(), fileName);
 					}
 					System.out
@@ -90,25 +94,32 @@ public abstract class AbstractSubtitleExtractor implements SubtitleExtractor {
 		}
 	}
 
-	abstract protected List<SubInfo> getAvailableSubtitles(TvShowEpisodeInfo episode) throws Exception;
+	abstract protected List<SubInfo> getAvailableSubtitles(TvShowEpisodeInfo episode, String langName) throws Exception;
 
-	protected String getConfig(ConfigurationKeys key) {
-		return configuration.get(key.toString());
+	@SuppressWarnings("unchecked")
+	protected Map<String, String> getConfigMap(ConfigurationKeys key) {
+		if (!configuration.containsKey(key.toString())) {
+			return new LinkedHashMap<String, String>();
+		} else {
+			return (Map<String, String>) configuration.get(key.toString());
+		}
 	}
 
-	protected String getLanguageCode() {
-		if (!hasConfig(ConfigurationKeys.SUB_LANG_CODE)) {
-			String langName = getConfig(ConfigurationKeys.SUB_LANG_NAME);
-			if (langName != null) {
-				try {
-					setSubtitleLanguage(langName);
-				} catch (Throwable e) {
-					e.printStackTrace();
-					throw new RuntimeException("Couldn't get Language code for " + langName, e);
-				}
+	protected String getConfigString(ConfigurationKeys key) {
+		return (String) configuration.get(key.toString());
+	}
+
+	protected String getLanguageCode(String langName) {
+		Map<String, String> mapping = getConfigMap(ConfigurationKeys.SUB_LANG_MAPPING);
+		if (!mapping.containsKey(langName)) {
+			try {
+				setSubtitleLanguage(langName);
+			} catch (Throwable e) {
+				e.printStackTrace();
+				throw new RuntimeException("Couldn't get Language code for " + langName, e);
 			}
 		}
-		return getConfig(ConfigurationKeys.SUB_LANG_CODE);
+		return getConfigMap(ConfigurationKeys.SUB_LANG_MAPPING).get(langName);
 	}
 
 	abstract protected Map<String, String> getLanguageCodeMapping() throws UnsupportedEncodingException;
@@ -140,6 +151,10 @@ public abstract class AbstractSubtitleExtractor implements SubtitleExtractor {
 		}
 	}
 
+	protected void setConfigMap(ConfigurationKeys key, Map<String, String> value) {
+		configuration.put(key.toString(), value);
+	}
+
 	protected void setPreferredShowName(TvShowInfo showInfo, String showName) {
 		TvDbSerieInfo serieInfo = TvDbLocalDao.getInstance().getSerieByName(showInfo.getName());
 		if (serieInfo != null) {
@@ -157,8 +172,9 @@ public abstract class AbstractSubtitleExtractor implements SubtitleExtractor {
 		String langName = loc.getDisplayLanguage(Locale.ENGLISH).toLowerCase();
 		if (langMapping.containsKey(langName)) {
 			System.out.println("Found language code meaning [" + loc.toString() + "] for " + getServiceName());
-			setConfig(ConfigurationKeys.SUB_LANG_NAME, loc.getLanguage());
-			setConfig(ConfigurationKeys.SUB_LANG_CODE, langMapping.get(langName));
+			Map<String, String> langMappingConfig = getConfigMap(ConfigurationKeys.SUB_LANG_MAPPING);
+			langMappingConfig.put(loc.getLanguage(), langMapping.get(langName));
+			setConfigMap(ConfigurationKeys.SUB_LANG_MAPPING, langMappingConfig);
 			saveConfiguration();
 		}
 	}

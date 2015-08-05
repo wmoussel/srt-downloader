@@ -25,11 +25,17 @@ public class SrtDownloaderShell implements ShellDependent {
 		ShellFactory.createConsoleShell("srt-down", "Java Srt Downloader", new SrtDownloaderShell()).commandLoop();
 	}
 
+	private String currentLangName = null;
 	Shell mainShell;
 
 	@Override
 	public void cliSetShell(Shell shell) {
 		this.mainShell = shell;
+	}
+
+	@Command(name = "lang")
+	public void setLangName(@Param(name = "langName") String langName) {
+		currentLangName = langName;
 	}
 
 	@Command(name = "showadd")
@@ -94,7 +100,38 @@ public class SrtDownloaderShell implements ShellDependent {
 	@Command(name = "subauto")
 	public String subAutoDownload() {
 		try {
-			AutoDownload.lauchDownload(null);
+			AutoDownload.lauchDownload(null, currentLangName);
+			return "Done.";
+		} catch (Exception e) {
+			e.printStackTrace(System.err);
+			return "ERROR: " + e.getMessage();
+		}
+	}
+
+	@Command(name = "subauto")
+	public String subAutoDownload(@Param(name = "folder") String folder) {
+		try {
+			AutoDownload.lauchDownload(new String[] { folder }, currentLangName);
+			return "Done.";
+		} catch (Exception e) {
+			e.printStackTrace(System.err);
+			return "ERROR: " + e.getMessage();
+		}
+	}
+
+	@Command(name = "subget")
+	public String subDownloadForFile(@Param(name = "videoFilePath") String videoFile) {
+		try {
+			File file = new File(videoFile);
+			VideoFileInfoImpl fileInfo = new VideoFileInfoImpl(file);
+			try {
+				Path subPath = new Addic7edInteractiveExtractor().extractTvSubtitle(fileInfo.tvEpisodeInfo,
+						currentLangName, file.getParentFile(), fileInfo);
+				System.out.println("File downloaded at: " + subPath.toString());
+
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 			return "Done.";
 		} catch (Exception e) {
 			e.printStackTrace(System.err);
