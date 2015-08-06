@@ -34,6 +34,15 @@ public class SrtDownloaderShell implements ShellDependent {
 	}
 
 	@Command(name = "lang")
+	public String getCurrentLangName() {
+		if (currentLangName == null) {
+			return AutoDownload.getDefaultLanguage();
+		} else {
+			return currentLangName;
+		}
+	}
+
+	@Command(name = "lang")
 	public void setLangName(@Param(name = "langName") String langName) {
 		currentLangName = langName;
 	}
