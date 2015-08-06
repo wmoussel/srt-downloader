@@ -113,7 +113,7 @@ public abstract class AbstractSubtitleExtractor implements SubtitleExtractor {
 		Map<String, String> mapping = getConfigMap(ConfigurationKeys.SUB_LANG_MAPPING);
 		if (!mapping.containsKey(langName)) {
 			try {
-				setSubtitleLanguage(langName);
+				getAndSaveLanguageCodeFor(langName);
 			} catch (Throwable e) {
 				e.printStackTrace();
 				throw new RuntimeException("Couldn't get Language code for " + langName, e);
@@ -164,7 +164,7 @@ public abstract class AbstractSubtitleExtractor implements SubtitleExtractor {
 		}
 	}
 
-	public void setSubtitleLanguage(String lang) throws UnsupportedEncodingException {
+	public void getAndSaveLanguageCodeFor(String lang) throws UnsupportedEncodingException {
 
 		Map<String, String> langMapping = null;
 		langMapping = getLanguageCodeMapping();

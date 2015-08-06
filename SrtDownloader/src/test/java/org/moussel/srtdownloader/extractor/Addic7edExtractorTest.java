@@ -61,7 +61,7 @@ public class Addic7edExtractorTest extends Addic7edExtractor {
 
 	/**
 	 * Test method for
-	 * {@link org.moussel.srtdownloader.extractor.Addic7edExtractor#setSubtitleLanguage(java.lang.String)}
+	 * {@link org.moussel.srtdownloader.extractor.Addic7edExtractor#getAndSaveLanguageCodeFor(java.lang.String)}
 	 * .
 	 * 
 	 * @throws UnsupportedEncodingException
@@ -74,8 +74,7 @@ public class Addic7edExtractorTest extends Addic7edExtractor {
 		for (int i = 0; i < langToTest.length; i++) {
 			String lang = langToTest[i];
 			String exp = expectedTest[i];
-			setSubtitleLanguage(lang);
-			String langCode = getLanguageCode();
+			String langCode = getLanguageCode(lang);
 			assertTrue("Couldn't get correct language code for " + lang, exp.equals(langCode));
 		}
 	}
