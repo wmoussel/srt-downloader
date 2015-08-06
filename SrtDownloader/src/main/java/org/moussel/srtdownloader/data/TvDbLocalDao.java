@@ -57,6 +57,12 @@ public class TvDbLocalDao {
 		updateShow(serieInfo);
 	}
 
+	@SuppressWarnings("unchecked")
+	public <T> T getConfiguration(String serviceName) {
+		return (T) jsonDb.extractorsConfiguration.get(serviceName);
+
+	}
+
 	public TvDbSerieInfo getSerieByName(String show) {
 		if (jsonDb.getSerieIdByAlternativeName().containsKey(show)) {
 			String serieId = jsonDb.getSerieIdByAlternativeName().get(show);
@@ -97,6 +103,11 @@ public class TvDbLocalDao {
 	private boolean persist() {
 		jsonDb.rebuildIndexes();
 		return writeDbToFile();
+	}
+
+	public void setConfiguration(String serviceName, Object configuration) {
+		jsonDb.extractorsConfiguration.put(serviceName, configuration);
+		persist();
 	}
 
 	public void updateShow(TvDbSerieInfo serieInfo) {

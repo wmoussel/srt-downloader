@@ -2,6 +2,8 @@ package org.moussel.srtdownloader.utils;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -9,8 +11,6 @@ import java.io.StringReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.sql.Connection;
-import java.sql.DriverManager;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Scanner;
@@ -19,38 +19,45 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 
+import org.apache.commons.lang.StringUtils;
+
 import com.fasterxml.jackson.jr.ob.JSON;
 import com.fasterxml.jackson.jr.ob.JSON.Feature;
 import com.fasterxml.jackson.jr.ob.JSONObjectException;
 
 public class SrtDownloaderUtils {
 
-	private static final String APPLICATION_PROPERTIES = "srtDownloader.default.properties";
 	private static Properties applicationProps;
+
+	private static final String DEFAULT_APPLICATION_PROPERTIES = "srtDownloader.default.properties";
+
 	static final Scanner inputScanner = new Scanner(System.in);
 
-	static {
+	private static final String PROPERTY_FILE_OVERRIDE = "props";
 
+	static {
+		System.out.println("Loading properties");
 		applicationProps = new Properties();
 		try {
-			InputStream stream = SrtDownloaderUtils.class.getClassLoader()
-					.getResourceAsStream(APPLICATION_PROPERTIES);
+			InputStream stream = null;
+			if (System.getProperties().containsKey(PROPERTY_FILE_OVERRIDE)) {
+				// Check regular File
+				File file = new File(System.getProperty(PROPERTY_FILE_OVERRIDE));
+				if (file.exists() && file.isFile() && file.canRead()) {
+					stream = new FileInputStream(file);
+				} else {
+					stream = SrtDownloaderUtils.class.getClassLoader().getResourceAsStream(
+							System.getProperty(PROPERTY_FILE_OVERRIDE));
+				}
+			}
+			if (stream == null) {
+				stream = SrtDownloaderUtils.class.getClassLoader().getResourceAsStream(DEFAULT_APPLICATION_PROPERTIES);
+			}
 			if (stream != null) {
 				applicationProps.load(stream);
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
-		}
-	}
-
-	public static Connection getDbConnection() throws Exception {
-		Connection c = null;
-		try {
-			c = DriverManager.getConnection("jdbc:sqlite:test.db");
-			return c;
-		} catch (Exception e) {
-			System.err.println(e.getClass().getName() + ": " + e.getMessage());
-			throw e;
 		}
 	}
 
@@ -61,8 +68,8 @@ public class SrtDownloaderUtils {
 		return defaultValue;
 	}
 
-	public static void getUrlContent(URL url, Map<String, String> headers,
-			OutputStream out) throws MalformedURLException, IOException {
+	public static void getUrlContent(URL url, Map<String, String> headers, OutputStream out)
+			throws MalformedURLException, IOException {
 		BufferedInputStream in = null;
 		try {
 			URLConnection connection = url.openConnection();
@@ -96,8 +103,7 @@ public class SrtDownloaderUtils {
 			try {
 				JAXBContext jc = JAXBContext.newInstance(bean.getClass());
 				Unmarshaller unmarshaller = jc.createUnmarshaller();
-				beanObject = (T) unmarshaller.unmarshal(new StringReader(
-						responseAsString));
+				beanObject = (T) unmarshaller.unmarshal(new StringReader(responseAsString));
 				return beanObject;
 			} catch (JAXBException e) {
 				// TODO Auto-generated catch block
@@ -117,8 +123,7 @@ public class SrtDownloaderUtils {
 
 	public static String jsonString(Object bean) {
 		try {
-			return JSON.std.with(Feature.PRETTY_PRINT_OUTPUT)
-					.without(Feature.WRITE_NULL_PROPERTIES).asString(bean);
+			return JSON.std.with(Feature.PRETTY_PRINT_OUTPUT).without(Feature.WRITE_NULL_PROPERTIES).asString(bean);
 		} catch (JSONObjectException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -130,10 +135,17 @@ public class SrtDownloaderUtils {
 	}
 
 	public static int promtForInt(String invite, int maxRetries) {
+		return promtForInt(invite, maxRetries, null);
+	}
+
+	public static int promtForInt(String invite, int maxRetries, Integer defaultValue) {
 
 		for (int i = 0; i <= maxRetries; i++) {
 			try {
 				String choice = promtForString(invite);
+				if (defaultValue != null && StringUtils.isBlank(choice)) {
+					return defaultValue;
+				}
 				int choiceInt = Integer.parseInt(choice);
 				return choiceInt;
 			} catch (Exception e) {
