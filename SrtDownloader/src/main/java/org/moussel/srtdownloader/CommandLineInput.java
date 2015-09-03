@@ -7,6 +7,7 @@ import org.moussel.srtdownloader.extractor.Addic7edInteractiveExtractor;
 import org.moussel.srtdownloader.utils.SrtDownloaderUtils;
 
 public class CommandLineInput {
+	static String currentLangName = null;
 	static File downloadToFolder = new File("/Users/wandrillemoussel/Movies");
 
 	public static void getSubtitles(String show, Integer season, String episodeNumber) throws Exception {
@@ -32,7 +33,7 @@ public class CommandLineInput {
 		SubtitleExtractor extractor = new Addic7edInteractiveExtractor();
 
 		for (TvShowEpisodeInfo episode : episodeList) {
-			extractor.extractTvSubtitle(episode, null, downloadToFolder, null);
+			extractor.extractTvSubtitle(episode, currentLangName, downloadToFolder, null);
 		}
 	}
 
@@ -72,6 +73,14 @@ public class CommandLineInput {
 		getSubtitles(show, season, episodeNumber);
 		System.out.println("Done.");
 
+	}
+
+	public static void setCurrentLangName(String currentLangName) {
+		CommandLineInput.currentLangName = currentLangName;
+	}
+
+	public static void setDownloadToFolder(File downloadToFolder) {
+		CommandLineInput.downloadToFolder = downloadToFolder;
 	}
 
 }

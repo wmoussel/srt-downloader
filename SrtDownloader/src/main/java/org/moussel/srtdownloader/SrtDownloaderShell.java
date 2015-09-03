@@ -152,6 +152,7 @@ public class SrtDownloaderShell implements ShellDependent {
 	public String subMaunalDownload(@Param(name = "showName") String serie, @Param(name = "season") int season,
 			@Param(name = "episode(s)") String episodes) {
 		try {
+			CommandLineInput.setCurrentLangName(getCurrentLangName());
 			CommandLineInput.getSubtitles(serie, season, episodes);
 			return "Done.";
 		} catch (Exception e) {
