@@ -1,8 +1,11 @@
 package org.moussel.srtdownloader.extractor;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -14,6 +17,7 @@ import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
 import org.moussel.srtdownloader.AutoDownload;
+import org.moussel.srtdownloader.SubInfo;
 import org.moussel.srtdownloader.SubtitleExtractor;
 import org.moussel.srtdownloader.TvShowEpisodeInfo;
 import org.moussel.srtdownloader.TvShowInfo;
@@ -28,13 +32,7 @@ public abstract class AbstractSubtitleExtractor implements SubtitleExtractor {
 		ENABLED, SERVICE_URL, SUB_LANG_MAPPING
 	}
 
-	class SubInfo {
-		public LinkedHashMap<String, String> headers;
-		String url;
-		Map<String, String> versionInfos;
-	}
-
-	private static Map<String, Object> configuration = new HashMap<>();
+	private Map<String, Object> configuration = new HashMap<>();
 
 	// static public List<SubtitleExtractor> getEnabledExtractorList() {
 	// // Annotation
@@ -50,6 +48,26 @@ public abstract class AbstractSubtitleExtractor implements SubtitleExtractor {
 
 	protected abstract SubInfo chooseSub(List<SubInfo> subInfos, VideoFileInfoImpl videoFileInfo);
 
+	public boolean downloadSubtitleToFile(SubInfo subInfoChosen, Path subFile) throws FileNotFoundException,
+			MalformedURLException, IOException {
+		System.out.print("Downloading subtitle file to [" + subFile.toString() + "]... ");
+		FileOutputStream subFileOutputStream = null;
+		try {
+			subFileOutputStream = new FileOutputStream(subFile.toFile());
+			SrtDownloaderUtils.getUrlContent(new URL(subInfoChosen.getUrl()), subInfoChosen.getHeaders(),
+					subFileOutputStream);
+			System.out.println("OK.");
+			return true;
+		} catch (Exception ex) {
+			System.out.println("FAILED: " + ex.getMessage());
+			return false;
+		} finally {
+			if (subFileOutputStream != null) {
+				subFileOutputStream.close();
+			}
+		}
+	}
+
 	@Override
 	public Path extractTvSubtitle(TvShowEpisodeInfo episode, String langName, File destinationFolder,
 			VideoFileInfoImpl videoFileInfo) throws Exception {
@@ -61,40 +79,33 @@ public abstract class AbstractSubtitleExtractor implements SubtitleExtractor {
 		} else {
 			SubInfo subInfoChosen = chooseSub(subInfos, videoFileInfo);
 			if (subInfoChosen != null) {
-				FileOutputStream subFileOutputStream = null;
 				try {
-					Path subFile;
-					if (videoFileInfo != null && videoFileInfo.getVideoFilePath() != null) {
-						Path videoFile = videoFileInfo.getVideoFilePath();
-						subFile = AutoDownload.getSubtitlePath(videoFile, langName);
-					} else {
-						String fileName = episode.getShow().getName() + " - "
-								+ StringUtils.leftPad("" + episode.getSeason(), 2, "0") + "x"
-								+ StringUtils.leftPad("" + episode.getEpisode(), 2, "0")
-								+ ((episode.getTitle() == null) ? "" : " - " + episode.getTitle()) + "."
-								+ subInfoChosen.versionInfos.get("version") + "." + langName + ".srt";
-						subFile = Paths.get(destinationFolder.getAbsolutePath(), fileName);
+					Path subFile = getSubtitlePath(episode, langName, destinationFolder, videoFileInfo, subInfoChosen);
+					if (downloadSubtitleToFile(subInfoChosen, subFile)) {
+						return subFile;
 					}
-					System.out
-							.print("Downloading file [" + subInfoChosen.url + "] to [" + subFile.toString() + "]... ");
-					subFileOutputStream = new FileOutputStream(subFile.toFile());
-					SrtDownloaderUtils.getUrlContent(new URL(subInfoChosen.url), subInfoChosen.headers,
-							subFileOutputStream);
-					System.out.println("OK.");
-					return subFile;
 				} catch (Exception ex) {
-					System.out.println("FAILED: " + ex.getMessage());
-				} finally {
-					if (subFileOutputStream != null) {
-						subFileOutputStream.close();
-					}
+					System.out.println("ERROR: " + ex.getMessage());
 				}
 			}
 			return null;
 		}
 	}
 
-	abstract protected List<SubInfo> getAvailableSubtitles(TvShowEpisodeInfo episode, String langName) throws Exception;
+	public void getAndSaveLanguageCodeFor(String lang) throws UnsupportedEncodingException {
+
+		Map<String, String> langMapping = null;
+		langMapping = getLanguageCodeMapping();
+		Locale loc = new Locale(lang);
+		String langName = loc.getDisplayLanguage(Locale.ENGLISH).toLowerCase();
+		if (langMapping.containsKey(langName)) {
+			System.out.println("Found language code meaning [" + loc.toString() + "] for " + getServiceName());
+			Map<String, String> langMappingConfig = getConfigMap(ConfigurationKeys.SUB_LANG_MAPPING);
+			langMappingConfig.put(loc.getLanguage(), langMapping.get(langName));
+			setConfigMap(ConfigurationKeys.SUB_LANG_MAPPING, langMappingConfig);
+			saveConfiguration();
+		}
+	}
 
 	@SuppressWarnings("unchecked")
 	protected Map<String, String> getConfigMap(ConfigurationKeys key) {
@@ -132,6 +143,23 @@ public abstract class AbstractSubtitleExtractor implements SubtitleExtractor {
 		return null;
 	}
 
+	public Path getSubtitlePath(TvShowEpisodeInfo episode, String langName, File destinationFolder,
+			VideoFileInfoImpl videoFileInfo, SubInfo subInfoChosen) {
+		Path subFile;
+		if (videoFileInfo != null && videoFileInfo.getVideoFilePath() != null) {
+			Path videoFile = videoFileInfo.getVideoFilePath();
+			subFile = AutoDownload.getSubtitlePath(videoFile, langName);
+		} else {
+			String fileName = episode.getShow().getName() + " - "
+					+ StringUtils.leftPad("" + episode.getSeason(), 2, "0") + "x"
+					+ StringUtils.leftPad("" + episode.getEpisode(), 2, "0")
+					+ ((episode.getTitle() == null) ? "" : " - " + episode.getTitle()) + "-"
+					+ subInfoChosen.getVersionInfos().get("version") + "." + langName + ".srt";
+			subFile = Paths.get(destinationFolder.getAbsolutePath(), fileName);
+		}
+		return subFile;
+	}
+
 	protected boolean hasConfig(ConfigurationKeys key) {
 		return configuration.containsKey(key.toString());
 	}
@@ -161,21 +189,6 @@ public abstract class AbstractSubtitleExtractor implements SubtitleExtractor {
 			System.out.println("Saving [" + showName + "] as preferred name for " + getServiceName());
 			serieInfo.getOtherIds().put(getServiceName(), showName);
 			TvDbLocalDao.getInstance().updateShow(serieInfo);
-		}
-	}
-
-	public void getAndSaveLanguageCodeFor(String lang) throws UnsupportedEncodingException {
-
-		Map<String, String> langMapping = null;
-		langMapping = getLanguageCodeMapping();
-		Locale loc = new Locale(lang);
-		String langName = loc.getDisplayLanguage(Locale.ENGLISH).toLowerCase();
-		if (langMapping.containsKey(langName)) {
-			System.out.println("Found language code meaning [" + loc.toString() + "] for " + getServiceName());
-			Map<String, String> langMappingConfig = getConfigMap(ConfigurationKeys.SUB_LANG_MAPPING);
-			langMappingConfig.put(loc.getLanguage(), langMapping.get(langName));
-			setConfigMap(ConfigurationKeys.SUB_LANG_MAPPING, langMappingConfig);
-			saveConfiguration();
 		}
 	}
 

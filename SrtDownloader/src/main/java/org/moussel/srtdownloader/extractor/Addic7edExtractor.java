@@ -1,11 +1,13 @@
 package org.moussel.srtdownloader.extractor;
 
+import java.io.ByteArrayOutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,12 +21,14 @@ import org.htmlcleaner.HtmlCleaner;
 import org.htmlcleaner.TagNode;
 import org.htmlcleaner.XPather;
 import org.htmlcleaner.XPatherException;
+import org.moussel.srtdownloader.SubInfo;
 import org.moussel.srtdownloader.SubtitleExtractor;
 import org.moussel.srtdownloader.TvShowEpisodeInfo;
 import org.moussel.srtdownloader.TvShowInfo;
 import org.moussel.srtdownloader.VideoFileInfoImpl;
 import org.moussel.srtdownloader.data.TvDbLocalDao;
 import org.moussel.srtdownloader.data.tvdb.bean.TvDbSerieInfo;
+import org.moussel.srtdownloader.utils.SrtDownloaderUtils;
 
 public class Addic7edExtractor extends AbstractSubtitleExtractor implements SubtitleExtractor {
 
@@ -42,7 +46,7 @@ public class Addic7edExtractor extends AbstractSubtitleExtractor implements Subt
 			Optional<SubInfo> choice = subInfos.stream().filter(new Predicate<SubInfo>() {
 				@Override
 				public boolean test(SubInfo si) {
-					String subVersion = si.versionInfos.get("version").toLowerCase();
+					String subVersion = si.getVersionInfos().get("version").toLowerCase();
 					String videoVersion = videoFile.getTeam().toLowerCase();
 					return subVersion.contains(videoVersion) || videoVersion.contains(subVersion);
 				}
@@ -55,7 +59,8 @@ public class Addic7edExtractor extends AbstractSubtitleExtractor implements Subt
 			choice = subInfos.stream().filter(new Predicate<SubInfo>() {
 				@Override
 				public boolean test(SubInfo si) {
-					return si.versionInfos.get("comment").toLowerCase().contains(videoFile.getTeam().toLowerCase());
+					return si.getVersionInfos().get("comment").toLowerCase()
+							.contains(videoFile.getTeam().toLowerCase());
 				}
 			}).findFirst();
 			if (choice.isPresent()) {
@@ -67,8 +72,8 @@ public class Addic7edExtractor extends AbstractSubtitleExtractor implements Subt
 
 				@Override
 				public int compare(SubInfo o1, SubInfo o2) {
-					return Integer.parseInt(o2.versionInfos.get("Downloads"))
-							- Integer.parseInt(o1.versionInfos.get("Downloads"));
+					return Integer.parseInt(o2.getVersionInfos().get("Downloads"))
+							- Integer.parseInt(o1.getVersionInfos().get("Downloads"));
 				}
 			}).findFirst();
 			if (choice.isPresent()) {
@@ -101,7 +106,7 @@ public class Addic7edExtractor extends AbstractSubtitleExtractor implements Subt
 	}
 
 	@Override
-	protected List<SubInfo> getAvailableSubtitles(TvShowEpisodeInfo episode, String langName) throws Exception {
+	public List<SubInfo> getAvailableSubtitles(TvShowEpisodeInfo episode, String langName) throws Exception {
 		List<SubInfo> subInfos = new ArrayList<SubInfo>();
 
 		LinkedHashMap<String, String> headers = new LinkedHashMap<>();
@@ -139,9 +144,9 @@ public class Addic7edExtractor extends AbstractSubtitleExtractor implements Subt
 						versionInfos.put("comment", comment);
 						System.out.println((subInfos.size() + 1) + "): " + versionInfos + " : "
 								+ getConfigString(ConfigurationKeys.SERVICE_URL) + href);
-						si.url = getConfigString(ConfigurationKeys.SERVICE_URL) + href;
-						si.versionInfos = versionInfos;
-						si.headers = headers;
+						si.setUrl(getConfigString(ConfigurationKeys.SERVICE_URL) + href);
+						si.setVersionInfos(versionInfos);
+						si.setHeaders(headers);
 						subInfos.add(si);
 					}
 				}
@@ -208,12 +213,18 @@ public class Addic7edExtractor extends AbstractSubtitleExtractor implements Subt
 		props.setTranslateSpecialEntities(true);
 		props.setTransResCharsToNCR(true);
 		props.setOmitComments(true);
+		// props.setOmitCdataOutsideScriptAndStyle(true);
 
+		ByteArrayOutputStream responseStream = new ByteArrayOutputStream();
+		SrtDownloaderUtils.getUrlContent(new URL(url), new HashMap<String, String>(), responseStream);
+		String responseString = responseStream.toString();
+		// System.out.println("String: " + responseString);
 		// do parsing
-		TagNode tagNode = new HtmlCleaner(props).clean(new URL(url));
+		// TagNode tagNode = new HtmlCleaner(props).clean(new URL(url));
+		TagNode tagNode = new HtmlCleaner(props).clean(responseString);
 
 		// serialize to xml file
-		// System.out.println(new
+		// System.out.println("Parsed: " + new
 		// PrettyXmlSerializer(props).getAsString(tagNode, "utf-8"));
 		return tagNode;
 	}
