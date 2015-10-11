@@ -100,7 +100,7 @@ public class TvDbLocalDao {
 		}
 	}
 
-	private boolean persist() {
+	public boolean persist() {
 		jsonDb.rebuildIndexes();
 		return writeDbToFile();
 	}
