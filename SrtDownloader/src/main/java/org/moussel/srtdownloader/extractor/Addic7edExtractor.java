@@ -216,7 +216,8 @@ public class Addic7edExtractor extends AbstractSubtitleExtractor implements Subt
 		// props.setOmitCdataOutsideScriptAndStyle(true);
 
 		ByteArrayOutputStream responseStream = new ByteArrayOutputStream();
-		SrtDownloaderUtils.getUrlContent(new URL(url), new HashMap<String, String>(), responseStream);
+		HashMap<String, String> headers = new LinkedHashMap<String, String>();
+		SrtDownloaderUtils.getUrlContent(new URL(url), headers, responseStream);
 		String responseString = responseStream.toString();
 		// System.out.println("String: " + responseString);
 		// do parsing

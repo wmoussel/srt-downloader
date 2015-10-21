@@ -16,8 +16,10 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Scanner;
 
@@ -80,23 +82,22 @@ public class SrtDownloaderUtils {
 		try {
 			System.out.println("URL: " + url);
 			URLConnection connection = url.openConnection();
-			if (headers != null) {
-				for (Map.Entry<String, String> h : headers.entrySet()) {
-					connection.setRequestProperty(h.getKey(), h.getValue());
-				}
+			if (headers == null) {
+				headers = new LinkedHashMap<String, String>();
 			}
-			connection.setIfModifiedSince(1);
+			if (!headers.containsKey("Cache-Control")) {
+				headers.put("Cache-Control", "no-store");
+			}
+			for (Map.Entry<String, String> h : headers.entrySet()) {
+				connection.setRequestProperty(h.getKey(), h.getValue());
+			}
 			connection.connect();
 
-			// Map<String, List<String>> respHeaders =
-			// connection.getHeaderFields();
-			//
-			// for (Entry<String, List<String>> hEntry : respHeaders.entrySet())
-			// {
-			// System.out.println("[" + hEntry.getKey() + "] := ([" +
-			// StringUtils.join(hEntry.getValue(), "],[")
-			// + "])");
-			// }
+			Map<String, List<String>> respHeaders = connection.getHeaderFields();
+
+			for (Entry<String, List<String>> hEntry : respHeaders.entrySet()) {
+				headers.put(hEntry.getKey(), StringUtils.join(hEntry.getValue(), ";"));
+			}
 
 			in = new BufferedInputStream(connection.getInputStream());
 
