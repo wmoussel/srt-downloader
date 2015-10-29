@@ -86,7 +86,10 @@ public class SrtDownloaderUtils {
 				headers = new LinkedHashMap<String, String>();
 			}
 			if (!headers.containsKey("Cache-Control")) {
-				headers.put("Cache-Control", "no-store");
+				headers.put("Pragma", "no-cache");
+				// headers.put("Cache-Control", "public no-cache no-store");
+				// headers.put("If-Modified-Since",
+				// "Fri, 2 Jan 1970 09:45:00 GMT");
 			}
 			for (Map.Entry<String, String> h : headers.entrySet()) {
 				connection.setRequestProperty(h.getKey(), h.getValue());
