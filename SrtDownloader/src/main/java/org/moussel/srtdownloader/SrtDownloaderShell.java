@@ -3,7 +3,9 @@ package org.moussel.srtdownloader;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
 import org.moussel.srtdownloader.data.TvDbLocalDao;
@@ -11,6 +13,7 @@ import org.moussel.srtdownloader.data.TvDbServiceConnector;
 import org.moussel.srtdownloader.data.tvdb.bean.TvDbSerieInfo;
 import org.moussel.srtdownloader.data.tvdb.bean.TvDbSeriesList;
 import org.moussel.srtdownloader.extractor.Addic7edInteractiveExtractor;
+import org.moussel.srtdownloader.extractor.SubSynchroTvExtractor;
 import org.moussel.srtdownloader.utils.SrtDownloaderUtils;
 
 import asg.cliche.Command;
@@ -106,6 +109,31 @@ public class SrtDownloaderShell implements ShellDependent {
 
 	}
 
+	@Command(name = "showrefresh")
+	public String showRefreshList() {
+		TvDbServiceConnector svc = new TvDbServiceConnector();
+		TvDbLocalDao localDb = TvDbLocalDao.getInstance();
+		List<TvDbSerieInfo> updatedShows = new ArrayList<>();
+		try {
+			Collection<TvDbSerieInfo> showList = localDb.getSeriesList();
+			for (TvDbSerieInfo show : showList) {
+				TvDbSerieInfo refreshedInfo = svc.getSerieInfo(show.id);
+				if (show.updateInfos(refreshedInfo)) {
+					updatedShows.add(show);
+				}
+			}
+			if (!updatedShows.isEmpty()) {
+				localDb.persist();
+			}
+			return new StringBuilder().append(updatedShows.size()).append("/").append(showList.size())
+					.append(" Series updated:\n").append(SrtDownloaderUtils.jsonString(updatedShows)).toString();
+		} catch (Exception e) {
+			e.printStackTrace(System.err);
+			return "ERROR: " + e.getMessage();
+		}
+
+	}
+
 	@Command(name = "subauto")
 	public String subAutoDownload() {
 		try {
@@ -141,6 +169,20 @@ public class SrtDownloaderShell implements ShellDependent {
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
+			return "Done.";
+		} catch (Exception e) {
+			e.printStackTrace(System.err);
+			return "ERROR: " + e.getMessage();
+		}
+	}
+
+	@Command(name = "ssget")
+	public String subMaunalDownload(@Param(name = "showName") String serie, @Param(name = "season") int season,
+			@Param(name = "episode") int episode) {
+		try {
+			SubSynchroTvExtractor extractor = new SubSynchroTvExtractor();
+			TvShowEpisodeInfo ep = new TvShowEpisodeInfoImpl(serie, season, episode);
+			extractor.extractTvSubtitle(ep, getCurrentLangName(), new File("/tmp/"), null);
 			return "Done.";
 		} catch (Exception e) {
 			e.printStackTrace(System.err);

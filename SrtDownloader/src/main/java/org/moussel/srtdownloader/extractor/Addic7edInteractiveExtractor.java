@@ -2,6 +2,7 @@ package org.moussel.srtdownloader.extractor;
 
 import java.util.List;
 
+import org.moussel.srtdownloader.SubInfo;
 import org.moussel.srtdownloader.SubtitleExtractor;
 import org.moussel.srtdownloader.VideoFileInfoImpl;
 import org.moussel.srtdownloader.utils.SrtDownloaderUtils;

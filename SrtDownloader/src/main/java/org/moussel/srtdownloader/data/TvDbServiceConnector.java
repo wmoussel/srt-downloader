@@ -33,8 +33,7 @@ public class TvDbServiceConnector {
 
 	void getCurrentServerTime() {
 		try {
-			URL requestUrl = new URL(
-					"http://thetvdb.com/api/Updates.php?type=none");
+			URL requestUrl = new URL("http://thetvdb.com/api/Updates.php?type=none");
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
 		}
@@ -50,8 +49,7 @@ public class TvDbServiceConnector {
 
 	void getMirrorsList() {
 		try {
-			URL requestUrl = new URL("http://thetvdb.com/api/" + apiKey
-					+ "/mirrors.xml");
+			URL requestUrl = new URL("http://thetvdb.com/api/" + apiKey + "/mirrors.xml");
 			System.out.println(requestUrl.toString());
 			SrtDownloaderUtils.getUrlContent(requestUrl, null, System.out);
 			System.out.println();
@@ -65,13 +63,11 @@ public class TvDbServiceConnector {
 
 	public TvDbSerieInfo getSerieInfo(String id) {
 		try {
-			URL requestUrl = new URL(mirrorUrlWithApiKey + "/series/" + id
-					+ "/" + userLanguage + ".xml");
-			System.out.println(requestUrl.toString());
+			URL requestUrl = new URL(mirrorUrlWithApiKey + "/series/" + id + "/" + userLanguage + ".xml");
+			// System.out.println(requestUrl.toString());
 			TvDbSeriesList serieList = new TvDbSeriesList();
-			serieList = SrtDownloaderUtils.getUrlXmlContentAsBean(requestUrl,
-					serieList);
-			System.out.println(SrtDownloaderUtils.jsonString(serieList.get(0)));
+			serieList = SrtDownloaderUtils.getUrlXmlContentAsBean(requestUrl, serieList);
+			// System.out.println(SrtDownloaderUtils.jsonString(serieList.get(0)));
 			return serieList.get(0);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
@@ -82,14 +78,12 @@ public class TvDbServiceConnector {
 
 	public TvDbSeriesList getSeriesList(String serieName) {
 		try {
-			URL requestUrl = new URL(
-					"http://thetvdb.com/api/GetSeries.php?seriesname="
-							+ URLEncoder.encode(serieName, "ISO-8859-1"));
-			System.out.println(requestUrl.toString());
+			URL requestUrl = new URL("http://thetvdb.com/api/GetSeries.php?seriesname="
+					+ URLEncoder.encode(serieName, "ISO-8859-1"));
+			// System.out.println(requestUrl.toString());
 			TvDbSeriesList seriesList = new TvDbSeriesList();
-			seriesList = SrtDownloaderUtils.getUrlXmlContentAsBean(requestUrl,
-					seriesList);
-			System.out.println(seriesList.toString());
+			seriesList = SrtDownloaderUtils.getUrlXmlContentAsBean(requestUrl, seriesList);
+			// System.out.println(seriesList.toString());
 			return seriesList;
 		} catch (Exception e) {
 			// TODO Auto-generated catch block

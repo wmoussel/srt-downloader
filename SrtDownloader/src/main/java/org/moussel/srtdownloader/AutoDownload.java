@@ -16,6 +16,7 @@ import java.util.stream.Stream;
 
 import org.moussel.srtdownloader.data.TvDbLocalDao;
 import org.moussel.srtdownloader.extractor.Addic7edExtractor;
+import org.moussel.srtdownloader.extractor.SubSynchroTvExtractor;
 import org.moussel.srtdownloader.utils.SrtDownloaderUtils;
 
 public class AutoDownload {
@@ -84,7 +85,8 @@ public class AutoDownload {
 	}
 
 	public void autoDownload(String folder, String glob) throws IOException {
-		final SubtitleExtractor extractor = new Addic7edExtractor();
+		final SubtitleExtractor[] extractorList = new SubtitleExtractor[] { new SubSynchroTvExtractor(),
+				new Addic7edExtractor() };
 		final counter count = new counter();
 		System.out.println("\nAutoDownload for folder: " + folder);
 		try (Stream<Path> stream = Files.walk(Paths.get(folder))) {
@@ -104,14 +106,17 @@ public class AutoDownload {
 						// Download it
 						System.out.println("Subtitle missing for movie " + p.getFileName());
 						VideoFileInfoImpl fileInfo = new VideoFileInfoImpl(p.toFile());
-						try {
-							Path subPath = extractor.extractTvSubtitle(fileInfo.tvEpisodeInfo, getCurrentLanguage(), p
-									.getParent().toFile(), fileInfo);
-							if (subPath != null) {
-								count.foundSub++;
+						for (SubtitleExtractor extractor : extractorList) {
+							try {
+								Path subPath = extractor.extractTvSubtitle(fileInfo.tvEpisodeInfo,
+										getCurrentLanguage(), p.getParent().toFile(), fileInfo);
+								if (subPath != null) {
+									count.foundSub++;
+									break;
+								}
+							} catch (Exception e) {
+								e.printStackTrace();
 							}
-						} catch (Exception e) {
-							e.printStackTrace();
 						}
 					} else {
 						count.withSub++;

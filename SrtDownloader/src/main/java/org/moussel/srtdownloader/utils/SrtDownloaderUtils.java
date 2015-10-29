@@ -11,7 +11,15 @@ import java.io.StringReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Scanner;
 
@@ -72,12 +80,28 @@ public class SrtDownloaderUtils {
 			throws MalformedURLException, IOException {
 		BufferedInputStream in = null;
 		try {
+			System.out.println("URL: " + url);
 			URLConnection connection = url.openConnection();
-			if (headers != null) {
-				for (Map.Entry<String, String> h : headers.entrySet()) {
-					connection.setRequestProperty(h.getKey(), h.getValue());
-				}
+			if (headers == null) {
+				headers = new LinkedHashMap<String, String>();
 			}
+			if (!headers.containsKey("Cache-Control")) {
+				headers.put("Pragma", "no-cache");
+				// headers.put("Cache-Control", "public no-cache no-store");
+				// headers.put("If-Modified-Since",
+				// "Fri, 2 Jan 1970 09:45:00 GMT");
+			}
+			for (Map.Entry<String, String> h : headers.entrySet()) {
+				connection.setRequestProperty(h.getKey(), h.getValue());
+			}
+			connection.connect();
+
+			Map<String, List<String>> respHeaders = connection.getHeaderFields();
+
+			for (Entry<String, List<String>> hEntry : respHeaders.entrySet()) {
+				headers.put(hEntry.getKey(), StringUtils.join(hEntry.getValue(), ";"));
+			}
+
 			in = new BufferedInputStream(connection.getInputStream());
 
 			byte data[] = new byte[1024];
@@ -165,5 +189,24 @@ public class SrtDownloaderUtils {
 		} finally {
 		}
 		return null;
+	}
+
+	public static void zipExtract(Path zipFile, String toBeExtracted, Path extractedPath) throws IOException {
+		FileSystem fileSystem = FileSystems.newFileSystem(zipFile, null);
+		Path source = fileSystem.getPath(toBeExtracted);
+		Files.copy(source, extractedPath, StandardCopyOption.REPLACE_EXISTING);
+	}
+
+	public static List<Path> zipList(Path zipFile, String globPattern) throws IOException {
+		FileSystem zipfs = FileSystems.newFileSystem(zipFile, null);
+
+		GlobSearch walkAndSearch = new GlobSearch(globPattern);
+
+		Iterable<Path> dirs = zipfs.getRootDirectories();
+		/* For every root folder inside the ZIP archive */
+		for (Path root : dirs) {
+			Files.walkFileTree(root, walkAndSearch);
+		}
+		return walkAndSearch.getResults();
 	}
 }

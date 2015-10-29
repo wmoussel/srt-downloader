@@ -1,7 +1,9 @@
 package org.moussel.srtdownloader.data.tvdb.bean;
 
-import java.util.ArrayList;
+import java.lang.reflect.Field;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -40,7 +42,7 @@ public class TvDbSerieInfo {
 	 * <zap2it_id>SH02104223</zap2it_id> </Series>
 	 */
 
-	List<String> alternativeNames = new ArrayList<>();
+	Collection<String> alternativeNames = new LinkedHashSet<>();
 	String banner;
 
 	@XmlElement(name = "FirstAired")
@@ -76,7 +78,7 @@ public class TvDbSerieInfo {
 	@XmlElement(name = "zap2it_id")
 	String zap2itId;
 
-	public List<String> getAlternativeNames() {
+	public Collection<String> getAlternativeNames() {
 		if (alternativeNames.size() == 0 && StringUtils.isNotBlank(name)) {
 			alternativeNames.add(name);
 		}
@@ -198,5 +200,28 @@ public class TvDbSerieInfo {
 	@Override
 	public String toString() {
 		return name + "[" + id + "]";
+	}
+
+	public boolean updateInfos(TvDbSerieInfo refreshedInfo) {
+		boolean somethingWasUpdated = false;
+		Field[] fields = this.getClass().getDeclaredFields();
+		for (Field field : fields) {
+			if (field.getAnnotation(XmlElement.class) != null) {
+				try {
+					Object currentVal = field.get(this);
+					Object refreshedVal = field.get(refreshedInfo);
+					if (currentVal == null || !currentVal.toString().equals(refreshedVal.toString())) {
+						field.set(this, refreshedVal);
+						somethingWasUpdated = true;
+						System.out.println("Value of " + field.getName() + " changed from [" + currentVal + "] to ["
+								+ refreshedVal + "].");
+					}
+				} catch (IllegalArgumentException | IllegalAccessException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+
+		return somethingWasUpdated;
 	}
 }
