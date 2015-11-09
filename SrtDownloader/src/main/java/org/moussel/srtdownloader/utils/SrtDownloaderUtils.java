@@ -80,27 +80,25 @@ public class SrtDownloaderUtils {
 			throws MalformedURLException, IOException {
 		BufferedInputStream in = null;
 		try {
-			System.out.println("URL: " + url);
+			System.out.print("URL: " + url);
 			URLConnection connection = url.openConnection();
+			connection.setUseCaches(false);
 			if (headers == null) {
 				headers = new LinkedHashMap<String, String>();
 			}
-			if (!headers.containsKey("Cache-Control")) {
-				headers.put("Pragma", "no-cache");
-				// headers.put("Cache-Control", "public no-cache no-store");
-				// headers.put("If-Modified-Since",
-				// "Fri, 2 Jan 1970 09:45:00 GMT");
-			}
+			headers.put("Cache-Control", "max-age=0");
+			headers.put("User-Agent",
+					"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.11; rv:40.0) Gecko/20100101 Firefox/40.0");
 			for (Map.Entry<String, String> h : headers.entrySet()) {
 				connection.setRequestProperty(h.getKey(), h.getValue());
 			}
-			connection.connect();
 
 			Map<String, List<String>> respHeaders = connection.getHeaderFields();
 
 			for (Entry<String, List<String>> hEntry : respHeaders.entrySet()) {
 				headers.put(hEntry.getKey(), StringUtils.join(hEntry.getValue(), ";"));
 			}
+			System.out.println(" => [" + StringUtils.join(respHeaders.get(null), ";") + "]");
 
 			in = new BufferedInputStream(connection.getInputStream());
 
