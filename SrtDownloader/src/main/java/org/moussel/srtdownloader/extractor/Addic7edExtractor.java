@@ -22,6 +22,7 @@ import org.htmlcleaner.TagNode;
 import org.htmlcleaner.XPather;
 import org.htmlcleaner.XPatherException;
 import org.moussel.srtdownloader.SubInfo;
+import org.moussel.srtdownloader.SubInfoChoice;
 import org.moussel.srtdownloader.SubtitleExtractor;
 import org.moussel.srtdownloader.TvShowEpisodeInfo;
 import org.moussel.srtdownloader.TvShowInfo;
@@ -41,7 +42,7 @@ public class Addic7edExtractor extends AbstractSubtitleExtractor implements Subt
 	}
 
 	@Override
-	protected SubInfo chooseSub(List<SubInfo> subInfos, final VideoFileInfoImpl videoFile) {
+	protected SubInfoChoice chooseSub(List<SubInfo> subInfos, final VideoFileInfoImpl videoFile) {
 		if (videoFile != null) {
 			Optional<SubInfo> choice = subInfos.stream().filter(new Predicate<SubInfo>() {
 				@Override
@@ -52,8 +53,7 @@ public class Addic7edExtractor extends AbstractSubtitleExtractor implements Subt
 				}
 			}).findFirst();
 			if (choice.isPresent()) {
-				System.out.println("Team Match");
-				return choice.get();
+				return new SubInfoChoice("Team Match", choice.get());
 			}
 
 			choice = subInfos.stream().filter(new Predicate<SubInfo>() {
@@ -64,8 +64,7 @@ public class Addic7edExtractor extends AbstractSubtitleExtractor implements Subt
 				}
 			}).findFirst();
 			if (choice.isPresent()) {
-				System.out.println("Team Referenced in comment");
-				return choice.get();
+				return new SubInfoChoice("Team Referenced in comment", choice.get());
 			}
 
 			choice = subInfos.stream().sorted(new Comparator<SubInfo>() {
@@ -77,12 +76,11 @@ public class Addic7edExtractor extends AbstractSubtitleExtractor implements Subt
 				}
 			}).findFirst();
 			if (choice.isPresent()) {
-				System.out.println("Most Downloaded Subtitle");
-				return choice.get();
+				return new SubInfoChoice("Most Downloaded Subtitle", choice.get());
 			}
 
 		}
-		return subInfos.get(0);
+		return new SubInfoChoice("First Available Subtitle", subInfos.get(0));
 	}
 
 	public Object[] extractElementsFromUrl(String path, String xPathExpression) {

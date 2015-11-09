@@ -28,6 +28,7 @@ import java.util.function.Predicate;
 import org.apache.commons.lang.StringUtils;
 import org.moussel.srtdownloader.AutoDownload;
 import org.moussel.srtdownloader.SubInfo;
+import org.moussel.srtdownloader.SubInfoChoice;
 import org.moussel.srtdownloader.SubtitleExtractor;
 import org.moussel.srtdownloader.TvShowEpisodeInfo;
 import org.moussel.srtdownloader.VideoFileInfoImpl;
@@ -58,7 +59,7 @@ public class SubSynchroTvExtractor extends AbstractSubtitleExtractor implements 
 	 * (java.util.List, org.moussel.srtdownloader.VideoFileInfoImpl)
 	 */
 	@Override
-	protected SubInfo chooseSub(List<SubInfo> subInfos, final VideoFileInfoImpl videoFile) {
+	protected SubInfoChoice chooseSub(List<SubInfo> subInfos, final VideoFileInfoImpl videoFile) {
 		if (videoFile != null) {
 			Optional<SubInfo> choice = subInfos.stream().filter(new Predicate<SubInfo>() {
 				@Override
@@ -69,8 +70,7 @@ public class SubSynchroTvExtractor extends AbstractSubtitleExtractor implements 
 				}
 			}).findFirst();
 			if (choice.isPresent()) {
-				System.out.println("Release Match");
-				return choice.get();
+				return new SubInfoChoice("Release Match", choice.get());
 			}
 
 			choice = subInfos.stream().sorted(new Comparator<SubInfo>() {
@@ -87,13 +87,11 @@ public class SubSynchroTvExtractor extends AbstractSubtitleExtractor implements 
 				}
 			}).findFirst();
 			if (choice.isPresent()) {
-				System.out.println("Most liked Subtitle");
-				return choice.get();
+				return new SubInfoChoice("Most liked Subtitle", choice.get());
 			}
 
 		}
-		System.out.println("No good enough Sub to download.");
-		return null;
+		return new SubInfoChoice("No good enough Sub to download.");
 	}
 
 	@Override

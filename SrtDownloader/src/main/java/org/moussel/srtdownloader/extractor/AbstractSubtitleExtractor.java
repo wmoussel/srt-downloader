@@ -18,6 +18,7 @@ import java.util.Map;
 import org.apache.commons.lang.StringUtils;
 import org.moussel.srtdownloader.AutoDownload;
 import org.moussel.srtdownloader.SubInfo;
+import org.moussel.srtdownloader.SubInfoChoice;
 import org.moussel.srtdownloader.SubtitleExtractor;
 import org.moussel.srtdownloader.TvShowEpisodeInfo;
 import org.moussel.srtdownloader.TvShowInfo;
@@ -46,7 +47,7 @@ public abstract class AbstractSubtitleExtractor implements SubtitleExtractor {
 		}
 	}
 
-	protected abstract SubInfo chooseSub(List<SubInfo> subInfos, VideoFileInfoImpl videoFileInfo);
+	protected abstract SubInfoChoice chooseSub(List<SubInfo> subInfos, VideoFileInfoImpl videoFileInfo);
 
 	public boolean downloadSubtitleToFile(SubInfo subInfoChosen, Path subFile) throws FileNotFoundException,
 			MalformedURLException, IOException {
@@ -74,18 +75,24 @@ public abstract class AbstractSubtitleExtractor implements SubtitleExtractor {
 		List<SubInfo> subInfos = null;
 		subInfos = getAvailableSubtitles(episode, langName);
 		if (subInfos.isEmpty()) {
-			System.out.println("No " + langName + " Subtitle found.");
+			System.out.println("No Completed " + langName + " Subtitle found.");
 			return null;
 		} else {
-			SubInfo subInfoChosen = chooseSub(subInfos, videoFileInfo);
+			SubInfoChoice subInfoChosen = chooseSub(subInfos, videoFileInfo);
 			if (subInfoChosen != null) {
-				try {
-					Path subFile = getSubtitlePath(episode, langName, destinationFolder, videoFileInfo, subInfoChosen);
-					if (downloadSubtitleToFile(subInfoChosen, subFile)) {
-						return subFile;
+				if (subInfoChosen.hasSub()) {
+					System.out.println("Subtitle chosen for download: " + subInfoChosen.getReason());
+					try {
+						Path subFile = getSubtitlePath(episode, langName, destinationFolder, videoFileInfo,
+								subInfoChosen.getSub());
+						if (downloadSubtitleToFile(subInfoChosen.getSub(), subFile)) {
+							return subFile;
+						}
+					} catch (Exception ex) {
+						System.out.println("ERROR: " + ex.getMessage());
 					}
-				} catch (Exception ex) {
-					System.out.println("ERROR: " + ex.getMessage());
+				} else {
+					System.out.println("No subtitle was chosen: " + subInfoChosen.getReason());
 				}
 			}
 			return null;
