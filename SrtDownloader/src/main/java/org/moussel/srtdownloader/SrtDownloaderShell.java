@@ -67,6 +67,10 @@ public class SrtDownloaderShell implements ShellDependent {
 			}
 			chosenSerieInfo = svc.getSerieInfo(series.get(chosen).id);
 			chosenSerieInfo.getAlternativeNames().add(showName);
+			String cleanedName = showName.replaceAll("[-. ]+", " ");
+			if (!cleanedName.equals(showName)) {
+				chosenSerieInfo.getAlternativeNames().add(cleanedName);
+			}
 			TvDbLocalDao localDb = TvDbLocalDao.getInstance();
 			localDb.addShow(chosenSerieInfo);
 			return chosenSerieInfo.toString();
@@ -137,7 +141,7 @@ public class SrtDownloaderShell implements ShellDependent {
 	@Command(name = "subauto")
 	public String subAutoDownload() {
 		try {
-			AutoDownload.lauchDownload(null, currentLangName);
+			AutoDownload.lauchDownload(null, getCurrentLangName());
 			return "Done.";
 		} catch (Exception e) {
 			e.printStackTrace(System.err);
@@ -148,7 +152,7 @@ public class SrtDownloaderShell implements ShellDependent {
 	@Command(name = "subauto")
 	public String subAutoDownload(@Param(name = "folder") String folder) {
 		try {
-			AutoDownload.lauchDownload(new String[] { folder }, currentLangName);
+			AutoDownload.lauchDownload(new String[] { folder }, getCurrentLangName());
 			return "Done.";
 		} catch (Exception e) {
 			e.printStackTrace(System.err);
@@ -163,7 +167,7 @@ public class SrtDownloaderShell implements ShellDependent {
 			VideoFileInfoImpl fileInfo = new VideoFileInfoImpl(file);
 			try {
 				Path subPath = new Addic7edInteractiveExtractor().extractTvSubtitle(fileInfo.tvEpisodeInfo,
-						currentLangName, file.getParentFile(), fileInfo);
+						getCurrentLangName(), file.getParentFile(), fileInfo);
 				System.out.println("File downloaded at: " + subPath.toString());
 
 			} catch (Exception e) {
