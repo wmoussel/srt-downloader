@@ -104,6 +104,8 @@ public class AutoDownload {
 					if (!srtPath.toFile().exists()) {
 						count.withoutSubBefore++;
 						// Download it
+						System.out
+								.println("==================================================================================");
 						System.out.println("Subtitle missing for movie " + p.getFileName());
 						VideoFileInfoImpl fileInfo = new VideoFileInfoImpl(p.toFile());
 						for (SubtitleExtractor extractor : extractorList) {
