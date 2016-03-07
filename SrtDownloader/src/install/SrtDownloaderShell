@@ -1,0 +1,9 @@
+#!/bin/bash
+
+cd /Users/wandrillemoussel/git/srtdownloader/SrtDownloader/build/libs
+
+JAR_FILE=$(ls -1t *.jar | head -1)
+
+java -jar $JAR_FILE
+
+exit
