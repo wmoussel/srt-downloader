@@ -47,9 +47,16 @@ public class Addic7edExtractor extends AbstractSubtitleExtractor implements Subt
 			Optional<SubInfo> choice = subInfos.stream().filter(new Predicate<SubInfo>() {
 				@Override
 				public boolean test(SubInfo si) {
-					String subVersion = si.getVersionInfos().get("version").toLowerCase();
-					String videoVersion = videoFile.getTeam().toLowerCase();
-					return subVersion.contains(videoVersion) || videoVersion.contains(subVersion);
+					final String subVersion = si.getVersionInfos().get("version").toLowerCase();
+					List<String> videoVersions = new ArrayList<>();
+					videoVersions.add(videoFile.getTeam().toLowerCase());
+					return videoVersions.stream().anyMatch(new Predicate<String>() {
+
+						@Override
+						public boolean test(String videoVersion) {
+							return subVersion.contains(videoVersion) || videoVersion.contains(subVersion);
+						}
+					});
 				}
 			}).findFirst();
 			if (choice.isPresent()) {

@@ -14,9 +14,8 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang.ClassUtils;
 import org.moussel.srtdownloader.data.TvDbLocalDao;
-import org.moussel.srtdownloader.extractor.Addic7edExtractor;
-import org.moussel.srtdownloader.extractor.SubSynchroTvExtractor;
 import org.moussel.srtdownloader.utils.SrtDownloaderUtils;
 
 public class AutoDownload {
@@ -53,6 +52,22 @@ public class AutoDownload {
 		return (List<String>) conf.get(folderInConf);
 	}
 
+	private static List<String> getEnabledExtractors() {
+		String extractorsInConf = "EXTRACTORS";
+		TvDbLocalDao jsonDb = TvDbLocalDao.getInstance();
+		Map<String, Object> conf = jsonDb.getConfiguration("AutoDownload");
+		if (conf == null) {
+			conf = new HashMap<>();
+		}
+		if (conf == null || !conf.containsKey(extractorsInConf)) {
+			String extractors = SrtDownloaderUtils
+					.promtForString("Please setup extractors to use by giving their classes");
+			conf.put(extractorsInConf, Arrays.asList(extractors.split(",", -1)));
+			jsonDb.setConfiguration("AutoDownload", conf);
+		}
+		return (List<String>) conf.get(extractorsInConf);
+	}
+
 	public static Path getSubtitlePath(Path moviePath, String langName) {
 		String fileName = moviePath.getFileName().toString();
 		String fileBaseName = fileName.replaceFirst("\\.[^.]{2,4}$", "");
@@ -85,8 +100,31 @@ public class AutoDownload {
 	}
 
 	public void autoDownload(String folder, String glob) throws IOException {
-		final SubtitleExtractor[] extractorList = new SubtitleExtractor[] { new SubSynchroTvExtractor(),
-				new Addic7edExtractor() };
+		List<String> extractorClassNameList = getEnabledExtractors();
+		final List<SubtitleExtractor> extractorList = new ArrayList<>();
+		SubtitleExtractor extractor = null;
+		for (String className : extractorClassNameList) {
+			if (!className.contains(".")) {
+				className = SubtitleExtractor.class.getPackage().getName() + ".extractor." + className;
+			}
+			try {
+				Class extractorClass = Class.forName(className);
+				if (ClassUtils.isAssignable(extractorClass, SubtitleExtractor.class)) {
+					extractor = (SubtitleExtractor) extractorClass.newInstance();
+					extractorList.add(extractor);
+				}
+			} catch (ClassNotFoundException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			} catch (InstantiationException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IllegalAccessException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+
 		final counter count = new counter();
 		System.out.println("\nAutoDownload for folder: " + folder);
 		try (Stream<Path> stream = Files.walk(Paths.get(folder))) {
@@ -104,14 +142,14 @@ public class AutoDownload {
 					if (!srtPath.toFile().exists()) {
 						count.withoutSubBefore++;
 						// Download it
-						System.out
-								.println("==================================================================================");
+						System.out.println(
+								"==================================================================================");
 						System.out.println("Subtitle missing for movie " + p.getFileName());
 						VideoFileInfoImpl fileInfo = new VideoFileInfoImpl(p.toFile());
 						for (SubtitleExtractor extractor : extractorList) {
 							try {
-								Path subPath = extractor.extractTvSubtitle(fileInfo.tvEpisodeInfo,
-										getCurrentLanguage(), p.getParent().toFile(), fileInfo);
+								Path subPath = extractor.extractTvSubtitle(fileInfo.tvEpisodeInfo, getCurrentLanguage(),
+										p.getParent().toFile(), fileInfo);
 								if (subPath != null) {
 									count.foundSub++;
 									break;
@@ -123,7 +161,8 @@ public class AutoDownload {
 					} else {
 						count.withSub++;
 						// Debug
-						// System.out.println("Subtitle already there for movie "
+						// System.out.println("Subtitle already there for movie
+						// "
 						// + p.getFileName());
 					}
 				}
